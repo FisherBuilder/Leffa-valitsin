@@ -153,6 +153,53 @@ td.imdbc{font-weight:700}
 details.how{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 16px;font-size:.9rem}
 details.how summary{cursor:pointer;font-weight:600}
 details.how p{margin:8px 0 0;color:var(--muted)}
+/* Selaa */
+.plats{display:flex;flex-wrap:wrap;gap:8px}
+.plat{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:6px 12px 6px 6px;cursor:pointer;font-weight:600;font-size:.9rem}
+.plat img,.plat .lg{width:28px;height:28px;border-radius:7px;object-fit:cover;background:var(--line);flex:none}
+.plat[aria-pressed="true"]{border-color:var(--fg);box-shadow:inset 0 0 0 1px var(--fg)}
+.plat[aria-pressed="false"]{opacity:.55}
+.plat[disabled]{opacity:.35;cursor:default}
+.filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.filters label{display:flex;flex-direction:column;gap:4px;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;min-width:0}
+.filters select{font:inherit;font-size:.92rem;text-transform:none;letter-spacing:0;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 8px;min-width:0;width:100%}
+@media (max-width:480px){.filters{grid-template-columns:1fr 1fr}.filters label:first-child{grid-column:1/-1}}
+.actor{display:flex;gap:8px}
+.actor input{flex:1;min-width:0;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg)}
+.people{list-style:none;padding:0;margin:8px 0 0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
+.people li button{width:100%;display:grid;grid-template-columns:36px 1fr;gap:10px;align-items:center;text-align:left;border:0;border-top:1px solid var(--line);background:none;padding:8px 10px;cursor:pointer}
+.people li:first-child button{border-top:0}
+.people img,.people .ph{width:36px;height:48px;border-radius:6px;object-fit:cover}
+.people small{display:block;color:var(--muted);font-size:.78rem;overflow-wrap:anywhere}
+.actchip{display:inline-flex;align-items:center;gap:6px;margin-top:8px;background:var(--fg);color:var(--bg);border-radius:999px;padding:5px 6px 5px 12px;font-size:.9rem;font-weight:600}
+.actchip button{border:0;background:color-mix(in srgb,var(--bg) 20%,transparent);color:inherit;width:24px;height:24px;border-radius:50%;cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:14px}
+@media (max-width:420px){.grid{grid-template-columns:1fr 1fr;gap:10px}}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.tile .pimg{width:100%;aspect-ratio:2/3;object-fit:cover;display:block;background:var(--line);max-width:100%}
+.tile .pph{width:100%;aspect-ratio:2/3;background:repeating-linear-gradient(135deg,var(--line) 0 6px,var(--raised) 6px 12px)}
+.tile .tb{padding:10px;display:flex;flex-direction:column;gap:6px;flex:1;min-width:0}
+.tile h4{margin:0;font-family:var(--display);font-weight:700;font-size:1rem;line-height:1.15;overflow-wrap:anywhere}
+.tile .yr{color:var(--muted);font-size:.78rem}
+.tmdb{display:flex;align-items:baseline;gap:5px;font-variant-numeric:tabular-nums}
+.tmdb b{font-family:var(--display);font-size:1.05rem}
+.tmdb small{color:var(--muted);font-size:.72rem}
+.ring{display:inline-block;border-radius:4px;background:#0d253f;color:#90cea1;font-size:.62rem;font-weight:800;letter-spacing:.04em;padding:2px 5px;flex:none;align-self:center;line-height:1.2}
+.provs{display:flex;gap:4px;flex-wrap:wrap}
+.provs img{width:22px;height:22px;border-radius:5px}
+.provtxt{display:flex;flex-wrap:wrap;gap:4px}
+.provtxt span{font-size:.72rem;font-weight:600;border-radius:6px;padding:2px 7px;background:var(--raised);border:1px solid var(--line)}
+.tile .addc{margin-top:auto;border:0;border-radius:9px;background:var(--fg);color:var(--bg);font-weight:600;font-size:.88rem;padding:9px;cursor:pointer}
+.tile .addc[disabled]{background:var(--raised);color:var(--muted);border:1px solid var(--line);cursor:default}
+.tile .ov{font-size:.8rem;color:var(--muted);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
+.tile .ov.open{display:block}
+.more{margin-top:16px;width:100%}
+.setup{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.setup ol{margin:0;padding-left:20px;color:var(--muted);font-size:.9rem}
+.setup form{display:flex;gap:8px}
+.setup input{flex:1;min-width:0;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg)}
+.attr{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:24px;color:var(--muted);font-size:.78rem}
+.attr img{height:12px;width:auto}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:.9rem;z-index:30;box-shadow:0 8px 24px rgba(0,0,0,.3)}
 dialog{border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--fg);padding:20px;width:min(440px,calc(100vw - 32px))}
 dialog::backdrop{background:rgba(0,0,0,.5)}
@@ -161,6 +208,7 @@ dialog input{font:inherit;padding:10px 12px;border:1px solid var(--line);border-
 .foot{margin-top:40px;color:var(--muted);font-size:.8rem;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .foot button{background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;padding:0;font-size:.8rem}
 @media (max-width:420px){
+  .brand .bt{display:none}
   .card{grid-template-columns:60px 1fr;gap:12px}
   .poster,.ph{width:60px}
   .hero{grid-template-columns:72px 1fr;padding:16px}
@@ -172,8 +220,9 @@ dialog input{font:inherit;padding:10px 12px;border:1px solid var(--line);border-
 <body>
 <div class="top gut">
   <div class="wrap">
-    <h1 class="brand"><i><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 1v10l9-5z" fill="#16141a"/></svg></i>Leffavalitsin</h1>
+    <h1 class="brand"><i><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 1v10l9-5z" fill="#16141a"/></svg></i><span class="bt">Leffavalitsin</span></h1>
     <div class="tabs" role="group" aria-label="Näkymä">
+      <button type="button" id="tabBrowse" aria-pressed="false">Selaa</button>
       <button type="button" id="tabList" aria-pressed="true">Ehdokkaat<span class="n" id="nCount">0</span></button>
       <button type="button" id="tabCmp" aria-pressed="false">Vertailu</button>
     </div>
@@ -182,6 +231,54 @@ dialog input{font:inherit;padding:10px 12px;border:1px solid var(--line);border-
 
 <main class="gut">
 <div class="wrap">
+
+  <!-- Selaa -->
+  <section id="viewBrowse" hidden>
+    <div class="intro">
+      <h2>Mitä alustoilla on?</h2>
+      <p>Selaa Suomen suoratoistopalveluiden elokuvia. Selatessa näytetään TMDB:n käyttäjäarviot, ja IMDb-arvosana haetaan, kun lisäät elokuvan ehdokkaaksi.</p>
+    </div>
+    <div class="sec" id="setup" hidden></div>
+    <div id="browseUi">
+      <div class="sec">
+        <h3>Alustat</h3>
+        <div class="plats" id="plats"></div>
+      </div>
+      <div class="sec">
+        <div class="filters">
+          <label>Järjestys<select id="bSort">
+            <option value="rating">Parhaat arviot</option>
+            <option value="popularity">Suosituimmat</option>
+            <option value="date">Uusimmat</option>
+          </select></label>
+          <label>Lajityyppi<select id="bGenre"><option value="">Kaikki</option></select></label>
+          <label>Vähintään ääniä<select id="bVotes">
+            <option value="20">20</option>
+            <option value="100" selected>100</option>
+            <option value="500">500</option>
+            <option value="2000">2 000</option>
+          </select></label>
+        </div>
+      </div>
+      <div class="sec">
+        <h3>Näyttelijä</h3>
+        <form class="actor" id="actForm" autocomplete="off">
+          <input id="actInput" type="search" placeholder="Näyttelijän nimi" enterkeyhint="search" aria-label="Näyttelijän nimi">
+          <button class="ghost" type="submit">Hae</button>
+        </form>
+        <ul class="people" id="people" hidden></ul>
+        <div id="actChip"></div>
+      </div>
+      <div class="status" id="bStatus" hidden style="margin-top:16px"><div class="spin"></div><span id="bStatusText">Haetaan…</span></div>
+      <p class="err" id="bErr" hidden style="margin-top:16px"></p>
+      <div class="grid" id="grid"></div>
+      <button class="ghost more" id="bMore" type="button" hidden>Näytä lisää</button>
+    </div>
+    <div class="attr">
+      <img src="https://www.themoviedb.org/assets/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg" alt="TMDB">
+      <span>Tämä tuote käyttää TMDB:n rajapintaa, mutta TMDB ei ole hyväksynyt tai sertifioinut sitä. Saatavuustiedot: JustWatch.</span>
+    </div>
+  </section>
 
   <!-- Ehdokkaat -->
   <section id="viewList">
@@ -252,7 +349,7 @@ dialog input{font:inherit;padding:10px 12px;border:1px solid var(--line);border-
 
   <div class="foot">
     <span>Arvosanat: OMDb (IMDb, Rotten Tomatoes, Metacritic)</span>
-    <button type="button" id="keyBtn">OMDb-avain</button>
+    <span style="display:flex;gap:14px"><button type="button" id="tmdbBtn">TMDB-avain</button><button type="button" id="keyBtn">OMDb-avain</button></span>
   </div>
 </div>
 </main>
@@ -262,6 +359,18 @@ dialog input{font:inherit;padding:10px 12px;border:1px solid var(--line);border-
     <strong>OMDb-avain</strong>
     <span style="color:var(--muted);font-size:.88rem">Sovelluksessa on valmiina avain. Jos sen päiväraja täyttyy, voit syöttää oman ilmaisen avaimen osoitteesta omdbapi.com.</span>
     <input id="keyInput" autocomplete="off" spellcheck="false" placeholder="Tyhjä = oletusavain">
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="ghost" value="cancel" type="submit">Peruuta</button>
+      <button class="ghost" value="ok" type="submit" style="background:var(--fg);color:var(--bg);border-color:var(--fg)">Tallenna</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="tmdbDlg">
+  <form method="dialog">
+    <strong>TMDB-avain</strong>
+    <span style="color:var(--muted);font-size:.88rem">Sovelluksessa on valmiina avain. Voit halutessasi syöttää oman TMDB-avaimen (API Key tai API Read Access Token).</span>
+    <input id="tmdbInput" autocomplete="off" spellcheck="false" placeholder="Tyhjä = oletusavain">
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="ghost" value="cancel" type="submit">Peruuta</button>
       <button class="ghost" value="ok" type="submit" style="background:var(--fg);color:var(--bg);border-color:var(--fg)">Tallenna</button>
@@ -291,7 +400,7 @@ const cache = new Map(Object.entries(store.get("lv-cache", {})));
 let mood = "all", weight = store.get("lv-weight", 30), sortKey = "fit";
 let uidSeq = items.reduce((m, x) => Math.max(m, x.uid || 0), 0);
 function save(){
-  store.set("lv-items", items.map(({ uid, q, id, status, alts, own, msg, fi, via }) => ({ uid, q, id, status, alts, own, msg, fi, via })));
+  store.set("lv-items", items.map(({ uid, q, id, status, alts, own, msg, fi, via, prov, fiPreset, tmdb }) => ({ uid, q, id, status, alts, own, msg, fi, via, prov, fiPreset, tmdb })));
   const keep = {}; items.forEach(x => { if(x.id && cache.has(x.id)) keep[x.id] = cache.get(x.id); });
   store.set("lv-cache", keep);
 }
@@ -444,8 +553,10 @@ async function setChoice(item, id){
   const d = await details(id);
   if(!d){ Object.assign(item, { status:"error", msg:"Elokuvan tietoja ei saatu haettua." }); return; }
   if(items.some(x => x !== item && x.id === id)){ Object.assign(item, { status:"error", msg:"\"" + d.Title + "\" on jo listalla.", dup:true }); return; }
-  Object.assign(item, { id, d, status:"ok", msg:"", fi:undefined });
-  finnishName(item).then(() => { save(); renderList(); if(!$("viewCmp").hidden) renderCompare(); });
+  Object.assign(item, { id, d, status:"ok", msg:"", fi:item.fiPreset, prov:item.provPreset || undefined });
+  const refresh = () => { save(); renderList(); if(!$("viewCmp").hidden) renderCompare(); };
+  finnishName(item).then(refresh);
+  if(!item.prov) providersFor(item).then(refresh);
 }
 
 async function addTitles(text){
@@ -572,6 +683,7 @@ function cardEl(item){
   b.append(el("div", "sub", [d.Year, d.Runtime && d.Runtime !== "N/A" ? d.Runtime : null, d.Director && d.Director !== "N/A" ? "ohj. " + d.Director : null].filter(Boolean).join(" · ")));
   const gs = el("div", "genres"); genresOf(d).forEach(g => gs.append(el("span", "g", GENRE_FI[g] || g))); b.append(gs);
   b.append(scoresEl(d));
+  if(item.prov && item.prov.length) b.append(provTxt(item.prov));
   if(r.votes != null && r.votes < LOW_VOTES) b.append(el("div", "low", "Vähän IMDb-ääniä (" + fmt0(r.votes) + "), arvosana on epävarma."));
   // Oma kiinnostus
   const st = el("div", "stars"); st.append(el("span", null, "Oma kiinnostus"));
@@ -641,6 +753,7 @@ function renderHero(pool, all){
   if(best.x.fi && norm(best.x.fi) !== norm(d.Title)) b.append(el("div", "fi", best.x.fi));
   b.append(el("div", "fit", [d.Year, genresOf(d).map(g => GENRE_FI[g] || g).join(", "), d.Runtime && d.Runtime !== "N/A" ? d.Runtime : null].filter(Boolean).join(" · ") + " · sopivuus " + fmt0(best.f) + "/100"));
   const sc = scoresEl(d); sc.style.marginTop = "10px"; b.append(sc);
+  if(best.x.prov && best.x.prov.length){ const pt = provTxt(best.x.prov); pt.style.marginTop = "8px"; b.append(pt); }
   b.append(el("p", null, reasonText(best, pool)));
   if(d.Plot && d.Plot !== "N/A") b.append(el("p", null, d.Plot));
   if(pool[1] && best.f != null && pool[1].f != null && best.f - pool[1].f < 3) b.append(el("p", null, "Tiukka kisa: " + pool[1].x.d.Title + " on vain " + fmt1(best.f - pool[1].f) + " pistettä perässä."));
@@ -691,12 +804,15 @@ function renderTable(all){
 
 /* ---------- Näkymät ---------- */
 function show(view){
-  const cmp = view === "cmp";
-  $("viewList").hidden = cmp; $("viewCmp").hidden = !cmp;
-  $("tabList").setAttribute("aria-pressed", !cmp); $("tabCmp").setAttribute("aria-pressed", cmp);
-  if(cmp) renderCompare();
+  $("viewBrowse").hidden = view !== "browse"; $("viewList").hidden = view !== "list"; $("viewCmp").hidden = view !== "cmp";
+  $("tabBrowse").setAttribute("aria-pressed", view === "browse"); $("tabList").setAttribute("aria-pressed", view === "list"); $("tabCmp").setAttribute("aria-pressed", view === "cmp");
+  if(view === "cmp") renderCompare();
+  if(view === "browse") initBrowse();
+  if(view === "list") renderList();
+  store.set("lv-view", view);
   window.scrollTo({ top:0 });
 }
+$("tabBrowse").onclick = () => show("browse");
 $("tabList").onclick = () => show("list");
 $("tabCmp").onclick = () => { if(!okItems().length){ toast("Lisää ensin ehdokkaita."); return; } show("cmp"); };
 $("doneBtn").onclick = () => show("cmp");
@@ -710,6 +826,246 @@ $("addForm").onsubmit = e => {
 $("addInput").addEventListener("paste", e => {
   const t = (e.clipboardData || window.clipboardData).getData("text");
   if(t && t.includes("\n")){ e.preventDefault(); addTitles(t); }
+});
+
+
+/* ---------- TMDB: Selaa alustoittain ---------- */
+const TMDB = "https://api.themoviedb.org/3";
+const IMG = "https://image.tmdb.org/t/p/";
+const DEFAULT_TMDB = "213c9532fb6b9a0fba2ec0dceb583a85";
+const tmdbKey = () => store.get("lv-tmdb", "") || DEFAULT_TMDB;
+// Suomen tarjonta: tilaus, ilmainen tai mainosrahoitteinen. Vuokraus ja osto jätetään pois.
+const MONET = "flatrate|free|ads";
+const PLATFORMS = [
+  { key:"netflix", label:"Netflix", re:/^netflix$/i },
+  { key:"prime", label:"Prime Video", re:/^amazon prime video( with ads)?$/i },
+  { key:"hbo", label:"HBO Max", re:/^(hbo max|max)( amazon channel)?$/i },
+  { key:"areena", label:"Yle Areena", re:/areena/i }
+];
+async function tmdb(path, params = {}){
+  const key = tmdbKey();
+  if(!key) throw new Error("TMDB-avain puuttuu.");
+  const u = new URL(TMDB + path);
+  const bearer = key.length > 40;
+  if(!bearer) u.searchParams.set("api_key", key);
+  for(const [k, v] of Object.entries({ language:"fi-FI", ...params })) if(v != null && v !== "") u.searchParams.set(k, String(v));
+  let r;
+  try{ r = await fetch(u, bearer ? { headers:{ Authorization:"Bearer " + key } } : undefined); }
+  catch{ throw new Error("TMDB-palveluun ei saatu yhteyttä. Tarkista verkkoyhteys."); }
+  if(r.status === 401) throw new Error("TMDB-avain ei kelpaa. Tarkista avain sivun alalaidasta.");
+  if(r.status === 429) throw new Error("TMDB:n pyyntöraja tuli vastaan. Odota hetki ja yritä uudelleen.");
+  if(!r.ok) throw new Error("TMDB-virhe (HTTP " + r.status + ").");
+  return r.json();
+}
+let bInit = false, provMap = null, genres = [], bSel = store.get("lv-plats", PLATFORMS.map(p => p.key));
+let actor = null, bPages = {}, bResults = [], bSeq = 0;
+
+async function loadProviderMap(){
+  const c = store.get("lv-provmap", null);
+  if(c && Date.now() - c.t < 7 * 864e5) return c.map;
+  const d = await tmdb("/watch/providers/movie", { watch_region:"FI" });
+  const map = {};
+  PLATFORMS.forEach(p => {
+    const hits = (d.results || []).filter(x => p.re.test(x.provider_name.trim()));
+    map[p.key] = { ids:hits.map(h => h.provider_id), logo:hits[0] ? hits[0].logo_path : null, names:hits.map(h => h.provider_name) };
+  });
+  store.set("lv-provmap", { t:Date.now(), map });
+  return map;
+}
+async function loadGenres(){
+  const c = store.get("lv-genres", null);
+  if(c && Date.now() - c.t < 30 * 864e5) return c.g;
+  const d = await tmdb("/genre/movie/list");
+  store.set("lv-genres", { t:Date.now(), g:d.genres || [] });
+  return d.genres || [];
+}
+
+function renderSetup(){
+  const s = $("setup"); s.textContent = "";
+  const box = el("div", "setup");
+  box.append(el("strong", null, "Selaaminen tarvitsee TMDB-avaimen"));
+  const ol = el("ol");
+  ["Luo ilmainen tunnus osoitteessa themoviedb.org.", "Avaa Asetukset → API ja pyydä avain (henkilökohtainen, ei-kaupallinen käyttö).", "Kopioi API Key tai API Read Access Token alla olevaan kenttään."].forEach(t => ol.append(el("li", null, t)));
+  box.append(ol);
+  const f = el("form"); const inp = el("input"); inp.placeholder = "TMDB-avain"; inp.setAttribute("aria-label", "TMDB-avain"); inp.spellcheck = false;
+  const b = el("button", "ghost", "Tallenna"); b.type = "submit"; f.append(inp, b);
+  f.onsubmit = e => { e.preventDefault(); if(!inp.value.trim()) return; store.set("lv-tmdb", inp.value.trim()); store.set("lv-provmap", null); bInit = false; initBrowse(); };
+  box.append(f); s.append(box);
+}
+
+async function initBrowse(){
+  const has = !!tmdbKey();
+  $("setup").hidden = has; $("browseUi").hidden = !has;
+  if(!has){ renderSetup(); return; }
+  if(bInit){ if(bResults.length) renderGrid(); return; }
+  bInit = true;
+  bStatus("Haetaan alustoja…");
+  try{
+    [provMap, genres] = await Promise.all([loadProviderMap(), loadGenres()]);
+  }catch(e){ bInit = false; bStatus(""); bError(e.message); return; }
+  const gs = $("bGenre"); gs.length = 1;
+  genres.forEach(g => { const o = el("option", null, g.name.charAt(0).toUpperCase() + g.name.slice(1)); o.value = g.id; gs.append(o); });
+  renderPlats();
+  runDiscover(true);
+}
+function bStatus(t){ $("bStatusText").textContent = t || ""; $("bStatus").hidden = !t; }
+function bError(t){ $("bErr").textContent = t || ""; $("bErr").hidden = !t; }
+
+function renderPlats(){
+  const box = $("plats"); box.textContent = "";
+  PLATFORMS.forEach(p => {
+    const m = provMap[p.key], ok = m && m.ids.length;
+    const b = el("button", "plat"); b.type = "button";
+    if(ok && m.logo){ const im = el("img"); im.src = IMG + "w92" + m.logo; im.alt = ""; b.append(im); } else b.append(el("span", "lg"));
+    b.append(p.label);
+    if(!ok){ b.disabled = true; b.title = "Ei löydy TMDB:n Suomen alustoista"; }
+    b.setAttribute("aria-pressed", ok && bSel.includes(p.key));
+    b.onclick = () => {
+      bSel = bSel.includes(p.key) ? bSel.filter(k => k !== p.key) : [...bSel, p.key];
+      store.set("lv-plats", bSel); renderPlats(); runDiscover(true);
+    };
+    box.append(b);
+  });
+}
+const activePlats = () => PLATFORMS.filter(p => bSel.includes(p.key) && provMap[p.key] && provMap[p.key].ids.length);
+
+// Hakee jokaiselta valitulta alustalta erikseen, jotta jokaiseen elokuvaan voidaan merkitä, millä alustalla se on.
+async function runDiscover(reset){
+  const seq = ++bSeq;
+  const plats = activePlats();
+  if(reset){ bPages = {}; bResults = []; $("grid").textContent = ""; }
+  bError("");
+  if(!plats.length){ $("bMore").hidden = true; bError("Valitse vähintään yksi alusta."); return; }
+  const sort = $("bSort").value;
+  const sortBy = sort === "rating" ? "vote_average.desc" : sort === "date" ? "primary_release_date.desc" : "popularity.desc";
+  const today = new Date().toISOString().slice(0, 10);
+  bStatus("Haetaan elokuvia…"); $("bMore").hidden = true;
+  try{
+    const pages = await Promise.all(plats.map(async p => {
+      const st = bPages[p.key] || { page:0, total:1 };
+      if(st.page >= st.total) return null;
+      const d = await tmdb("/discover/movie", {
+        watch_region:"FI", with_watch_providers:provMap[p.key].ids.join("|"), with_watch_monetization_types:MONET,
+        sort_by:sortBy, "vote_count.gte":$("bVotes").value, with_genres:$("bGenre").value, with_cast:actor ? actor.id : "",
+        "primary_release_date.lte":today, include_adult:"false", page:st.page + 1
+      });
+      bPages[p.key] = { page:d.page, total:Math.min(d.total_pages || 1, 500) };
+      return { p, d };
+    }));
+    if(seq !== bSeq) return;
+    const byId = new Map(bResults.map(m => [m.id, m]));
+    pages.filter(Boolean).forEach(({ p, d }) => (d.results || []).forEach(m => {
+      const ex = byId.get(m.id);
+      if(ex){ if(!ex.plats.includes(p.key)) ex.plats.push(p.key); }
+      else { const nm = { ...m, plats:[p.key] }; byId.set(m.id, nm); bResults.push(nm); }
+    }));
+    const key = sort === "rating" ? m => m.vote_average : sort === "date" ? m => m.release_date || "" : m => m.popularity;
+    bResults.sort((a, b) => key(a) < key(b) ? 1 : key(a) > key(b) ? -1 : 0);
+    renderGrid();
+    $("bMore").hidden = !plats.some(p => bPages[p.key] && bPages[p.key].page < bPages[p.key].total);
+    if(!bResults.length) bError("Valinnoilla ei löytynyt elokuvia. Kokeile väljempiä rajauksia.");
+  }catch(e){ if(seq === bSeq) bError(e.message); }
+  finally{ if(seq === bSeq) bStatus(""); }
+}
+
+function renderGrid(){
+  const g = $("grid"); g.textContent = "";
+  bResults.forEach(m => g.append(tileEl(m)));
+}
+function tileEl(m){
+  const t = el("article", "tile");
+  if(m.poster_path){ const im = el("img", "pimg"); im.src = IMG + "w342" + m.poster_path; im.alt = ""; im.loading = "lazy"; t.append(im); } else t.append(el("div", "pph"));
+  const b = el("div", "tb");
+  b.append(el("h4", null, m.title));
+  const yr = (m.release_date || "").slice(0, 4);
+  b.append(el("div", "yr", [yr, m.original_title && m.original_title !== m.title ? m.original_title : null].filter(Boolean).join(" · ")));
+  const r = el("div", "tmdb"); r.append(el("span", "ring", "TMDB"), el("b", null, m.vote_count ? fmt1(m.vote_average) : "–"), el("small", null, m.vote_count ? fmt0(m.vote_count) + " ääntä" : "ei arvioita"));
+  b.append(r);
+  const pv = el("div", "provs");
+  m.plats.forEach(k => { const pm = provMap[k]; if(pm && pm.logo){ const im = el("img"); im.src = IMG + "w92" + pm.logo; im.alt = PLATFORMS.find(p => p.key === k).label; im.title = im.alt; pv.append(im); } });
+  b.append(pv);
+  if(m.overview){ const ov = el("div", "ov", m.overview); ov.onclick = () => ov.classList.toggle("open"); b.append(ov); }
+  const already = items.some(x => x.tmdb === m.id);
+  const add = el("button", "addc", already ? "Ehdokkaana ✓" : "+ Ehdokkaaksi"); add.type = "button"; add.disabled = already;
+  add.onclick = async () => {
+    add.disabled = true; add.textContent = "Lisätään…";
+    const ok = await addFromTmdb(m);
+    add.textContent = ok ? "Ehdokkaana ✓" : "+ Ehdokkaaksi"; add.disabled = ok;
+  };
+  b.append(add);
+  t.append(b); return t;
+}
+async function addFromTmdb(m){
+  try{
+    const ext = await tmdb("/movie/" + m.id + "/external_ids", { language:"" });
+    if(!ext.imdb_id){ toast("Elokuvalla ei ole IMDb-tunnusta, joten sitä ei voi lisätä."); return false; }
+    if(items.some(x => x.id === ext.imdb_id)){ toast("\"" + m.title + "\" on jo ehdokkaana."); return true; }
+    const item = { uid:++uidSeq, q:m.title, status:"loading", own:0, alts:[], tmdb:m.id,
+      fiPreset:m.title !== m.original_title ? m.title : undefined,
+      provPreset:m.plats.map(k => PLATFORMS.find(p => p.key === k).label) };
+    items.unshift(item); renderList();
+    await setChoice(item, ext.imdb_id);
+    save(); renderList();
+    if(item.status === "ok"){ toast("Lisätty: " + m.title); return true; }
+    toast(item.msg || "Lisäys epäonnistui."); items = items.filter(x => x !== item); save(); renderList(); return false;
+  }catch(e){ toast(e.message); return false; }
+}
+
+// Ehdokkaan alustat Suomessa (myös nimellä lisätyille), jos TMDB-avain on asetettu.
+async function providersFor(item){
+  if(!tmdbKey() || !item.id) return;
+  try{
+    let tid = item.tmdb;
+    if(!tid){
+      const f = await tmdb("/find/" + item.id, { external_source:"imdb_id", language:"" });
+      const hit = (f.movie_results || [])[0];
+      if(!hit) return;
+      tid = item.tmdb = hit.id;
+    }
+    const w = await tmdb("/movie/" + tid + "/watch/providers", { language:"" });
+    const fi = (w.results || {}).FI || {};
+    const names = [...(fi.flatrate || []), ...(fi.free || []), ...(fi.ads || [])].map(p => p.provider_name);
+    item.prov = [...new Set(names.map(n => { const p = PLATFORMS.find(pl => pl.re.test(n)); return p ? p.label : n; }))];
+  }catch{ /* Alustatieto on lisätieto, joten virhe ohitetaan. */ }
+}
+function provTxt(list){ const b = el("div", "provtxt"); list.forEach(n => b.append(el("span", null, n))); return b; }
+
+// Näyttelijähaku
+$("actForm").onsubmit = async e => {
+  e.preventDefault();
+  const q = $("actInput").value.trim(); if(!q) return;
+  const ul = $("people"); ul.textContent = ""; ul.hidden = true;
+  try{
+    const d = await tmdb("/search/person", { query:q, include_adult:"false" });
+    const ps = (d.results || []).filter(p => p.known_for_department === "Acting" || (p.known_for || []).length).slice(0, 6);
+    if(!ps.length){ bError("Näyttelijää \"" + q + "\" ei löytynyt."); return; }
+    bError("");
+    ps.forEach(p => {
+      const li = el("li"); const b = el("button"); b.type = "button";
+      if(p.profile_path){ const im = el("img"); im.src = IMG + "w92" + p.profile_path; im.alt = ""; b.append(im); } else b.append(el("div", "ph"));
+      const nm = el("span", null, p.name); nm.append(el("small", null, (p.known_for || []).map(k => k.title || k.name).filter(Boolean).slice(0, 3).join(", ")));
+      b.append(nm);
+      b.onclick = () => { actor = { id:p.id, name:p.name }; ul.hidden = true; $("actInput").value = ""; renderActor(); runDiscover(true); };
+      li.append(b); ul.append(li);
+    });
+    ul.hidden = false;
+  }catch(err){ bError(err.message); }
+};
+function renderActor(){
+  const box = $("actChip"); box.textContent = "";
+  if(!actor) return;
+  const c = el("span", "actchip", actor.name); const x = el("button", null, "×"); x.type = "button"; x.setAttribute("aria-label", "Poista näyttelijärajaus");
+  x.onclick = () => { actor = null; renderActor(); runDiscover(true); };
+  c.append(x); box.append(c);
+}
+["bSort", "bGenre", "bVotes"].forEach(id => $(id).onchange = () => runDiscover(true));
+$("bMore").onclick = () => runDiscover(false);
+$("tmdbBtn").onclick = () => { $("tmdbInput").value = store.get("lv-tmdb", ""); $("tmdbDlg").showModal(); };
+$("tmdbDlg").addEventListener("close", () => {
+  if($("tmdbDlg").returnValue !== "ok") return;
+  store.set("lv-tmdb", $("tmdbInput").value.trim()); store.set("lv-provmap", null); bInit = false;
+  toast("TMDB-avain tallennettu.");
+  if(!$("viewBrowse").hidden) initBrowse();
 });
 
 /* ---------- Jakaminen ---------- */
@@ -742,6 +1098,7 @@ $("keyDlg").addEventListener("close", () => { if($("keyDlg").returnValue === "ok
 
 renderList();
 loadShared();
+if(store.get("lv-view", "list") === "browse" && !location.hash) show("browse");
 </script>
 </body>
 </html>
