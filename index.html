@@ -1,0 +1,747 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#16141a">
+<title>Leffavalitsin</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23f5c518'/%3E%3Cpath d='M18 44V20l28 12z' fill='%2316141a'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: one column. Sticky header with count and the Compare button; add-field; candidate cards (poster, title, ratings strip, own stars).
+   Compare view: mood chips, weight slider, recommendation hero, per-category rankings, full table. */
+:root{
+  --bg:#f4f2ee; --surface:#ffffff; --raised:#faf9f6; --fg:#1a1820; --muted:#6c6874; --line:#e1ddd6;
+  --imdb:#f5c518; --imdb-ink:#16141a; --rt:#d8452f; --mc:#3f8f3a; --own:#5a4bd1; --accent:#5a4bd1; --warn:#9a5b00; --warn-bg:#fff3d9;
+  --display:"Bricolage Grotesque","Arial Narrow",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#16141a; --surface:#211e27; --raised:#1b1920; --fg:#f0edf4; --muted:#a29dab; --line:#34303c;
+  --imdb:#f5c518; --imdb-ink:#16141a; --rt:#f06a52; --mc:#6cc163; --own:#a99cff; --accent:#a99cff; --warn:#f0b65a; --warn-bg:#2e2516;
+  color-scheme:dark}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.5;-webkit-tap-highlight-color:transparent}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:720px;margin:0 auto}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+/* Header */
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:20}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:12px;padding-block:12px}
+.brand{font-family:var(--display);font-weight:800;font-size:1.45rem;letter-spacing:-.02em;line-height:1;margin:0;flex:1;min-width:0;display:flex;align-items:center;gap:8px}
+.brand i{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:8px;background:var(--imdb);flex:none}
+.brand i svg{width:12px;height:12px}
+.tabs{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px}
+.tabs button{border:0;background:none;padding:7px 14px;border-radius:999px;font-weight:600;font-size:.88rem;cursor:pointer;white-space:nowrap}
+.tabs button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.tabs .n{font-family:var(--mono);font-size:.78rem;opacity:.7;margin-left:4px}
+
+main{padding-block:20px 60px}
+.intro h2{font-family:var(--display);font-weight:800;font-size:clamp(1.7rem,6vw,2.3rem);line-height:1.05;letter-spacing:-.02em;margin:0 0 6px;text-wrap:balance}
+.intro p{margin:0;color:var(--muted);max-width:52ch}
+
+/* Add field */
+.add{margin-top:18px;display:flex;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:6px;box-shadow:0 6px 24px -14px rgba(0,0,0,.35)}
+.add input{flex:1;min-width:0;border:0;background:none;font:inherit;font-size:1.05rem;padding:10px 10px;color:var(--fg);outline:none}
+.add:focus-within{border-color:var(--accent)}
+.add button{border:0;border-radius:11px;background:var(--fg);color:var(--bg);font-weight:600;padding:0 18px;cursor:pointer}
+.hint{color:var(--muted);font-size:.82rem;margin:8px 4px 0}
+
+/* Cards */
+.list{display:flex;flex-direction:column;gap:12px;margin-top:20px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;display:grid;grid-template-columns:72px 1fr;gap:14px;padding:12px;position:relative}
+.poster{width:72px;aspect-ratio:2/3;border-radius:8px;object-fit:cover;background:var(--line);display:block;max-width:100%}
+.ph{width:72px;aspect-ratio:2/3;border-radius:8px;background:repeating-linear-gradient(135deg,var(--line) 0 6px,var(--raised) 6px 12px)}
+.body{min-width:0;display:flex;flex-direction:column;gap:6px}
+.ttl{font-family:var(--display);font-weight:700;font-size:1.15rem;line-height:1.15;margin:0;padding-right:28px;overflow-wrap:anywhere}
+.sub{color:var(--muted);font-size:.84rem;overflow-wrap:anywhere}
+.genres{display:flex;flex-wrap:wrap;gap:4px}
+.g{font-size:.72rem;font-weight:600;letter-spacing:.02em;padding:2px 8px;border-radius:999px;background:var(--raised);border:1px solid var(--line);color:var(--muted)}
+.scores{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch}
+.sc{display:flex;align-items:baseline;gap:5px;border-radius:8px;padding:4px 8px;font-variant-numeric:tabular-nums;border:1px solid var(--line)}
+.sc b{font-family:var(--display);font-weight:800;font-size:1.05rem}
+.sc small{font-size:.7rem;color:var(--muted);font-weight:600;letter-spacing:.04em}
+.sc.imdb{background:var(--imdb);color:var(--imdb-ink);border-color:var(--imdb)}
+.sc.imdb small{color:var(--imdb-ink);opacity:.75}
+.sc.imdb b{font-size:1.25rem}
+.sc.rt b{color:var(--rt)} .sc.mc b{color:var(--mc)}
+.low{font-size:.75rem;color:var(--warn)}
+.x{position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;border:0;background:none;color:var(--muted);cursor:pointer;font-size:1.2rem;line-height:1}
+.x:hover{background:var(--raised)}
+.stars{display:flex;align-items:center;gap:2px;flex-wrap:wrap}
+.stars span{font-size:.75rem;color:var(--muted);margin-right:6px}
+.star{border:0;background:none;padding:2px;cursor:pointer;line-height:0;color:var(--line)}
+.star svg{width:22px;height:22px}
+.star.on{color:var(--own)}
+.fi{font-size:.88rem;font-style:italic;margin-top:-4px;overflow-wrap:anywhere}
+.sugg{list-style:none;padding:0;margin:4px 0 0;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.sugg li button{width:100%;text-align:left;border:0;border-top:1px solid var(--line);background:var(--raised);padding:10px 12px;cursor:pointer;font-weight:500}
+.sugg li:first-child button{border-top:0}
+.alt{font-size:.82rem}
+.alt summary{cursor:pointer;color:var(--accent);list-style:none}
+.alt summary::-webkit-details-marker{display:none}
+.alt ul{list-style:none;padding:0;margin:6px 0 0;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.alt li button{width:100%;text-align:left;border:0;border-top:1px solid var(--line);background:var(--raised);padding:8px 10px;cursor:pointer}
+.alt li:first-child button{border-top:0}
+.state{color:var(--muted);font-size:.9rem;display:flex;align-items:center;gap:8px}
+.spin{width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--fg);border-radius:50%;animation:s .8s linear infinite;flex:none}
+@keyframes s{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation-duration:3s}}
+.card.bad{grid-template-columns:1fr}
+.retry{display:flex;gap:6px;margin-top:4px}
+.retry input{flex:1;min-width:0;font:inherit;font-size:.9rem;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg)}
+.retry button,.ghost{border:1px solid var(--line);border-radius:8px;background:var(--raised);padding:8px 12px;cursor:pointer;font-size:.9rem}
+.err{color:var(--warn);background:var(--warn-bg);border-radius:10px;padding:10px 12px;font-size:.9rem;margin:0}
+
+.empty{margin-top:22px;border:1.5px dashed var(--line);border-radius:16px;padding:22px;color:var(--muted);text-align:center}
+.cta{margin-top:20px;width:100%;border:0;border-radius:14px;padding:16px;background:var(--imdb);color:var(--imdb-ink);font-weight:700;font-size:1.05rem;cursor:pointer;display:flex;justify-content:center;align-items:center;gap:10px}
+.cta[disabled]{opacity:.45;cursor:default}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.tools .ghost{flex:1;min-width:140px}
+
+/* Compare view */
+.sec{margin-top:26px}
+.sec h3{font-size:.76rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;font-weight:600}
+.moods{display:flex;flex-wrap:wrap;gap:8px}
+.mood{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;cursor:pointer;font-weight:500;font-size:.92rem}
+.mood[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.mood .c{font-family:var(--mono);font-size:.75rem;opacity:.65;margin-left:5px}
+.weight{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.weight .lbls{display:flex;justify-content:space-between;font-size:.82rem;color:var(--muted);gap:10px}
+.weight input{width:100%;accent-color:var(--own);margin:8px 0 2px}
+.weight output{font-family:var(--mono);font-size:.8rem}
+.hero{background:var(--fg);color:var(--bg);border-radius:20px;padding:20px;display:grid;grid-template-columns:96px 1fr;gap:16px;align-items:start}
+.hero .poster,.hero .ph{width:96px}
+.hero .k{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;opacity:.7;font-weight:600}
+.hero h4{font-family:var(--display);font-weight:800;font-size:1.6rem;line-height:1.05;margin:4px 0 6px;overflow-wrap:anywhere;text-wrap:balance}
+.hero p{margin:6px 0 0;font-size:.92rem;opacity:.9}
+.hero .scores .sc{border-color:color-mix(in srgb,var(--bg) 25%,transparent)}
+.hero .sc small{color:inherit;opacity:.7}
+.hero .sc.imdb small{color:var(--imdb-ink)}
+.fit{font-family:var(--mono);font-size:.82rem;opacity:.8}
+.cats{display:flex;flex-direction:column;gap:14px}
+.cat{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.cat header{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.cat header b{font-family:var(--display);font-size:1.1rem}
+.cat header span{font-size:.8rem;color:var(--muted)}
+.rank{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center;padding:10px 14px;border-top:1px solid var(--line)}
+.rank:first-of-type{border-top:0}
+.rank .pos{font-family:var(--mono);color:var(--muted);font-size:.85rem}
+.rank .nm{min-width:0;overflow-wrap:anywhere;font-weight:500}
+.rank .nm small{display:block;color:var(--muted);font-weight:400;font-size:.78rem}
+.rank .vals{display:flex;gap:8px;align-items:center;font-variant-numeric:tabular-nums;font-size:.85rem}
+.rank .vals .i{background:var(--imdb);color:var(--imdb-ink);font-weight:800;border-radius:6px;padding:1px 6px;font-family:var(--display)}
+.rank .vals .f{font-family:var(--mono);color:var(--muted);font-size:.78rem}
+.rank.top .nm{font-weight:700}
+.note{font-size:.84rem;color:var(--muted);margin:8px 2px 0}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:.88rem;font-variant-numeric:tabular-nums}
+th,td{padding:9px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left;white-space:normal;min-width:150px}
+th{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;cursor:pointer;user-select:none}
+th[aria-sort] {color:var(--fg)}
+tr:last-child td{border-bottom:0}
+td.imdbc{font-weight:700}
+details.how{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 16px;font-size:.9rem}
+details.how summary{cursor:pointer;font-weight:600}
+details.how p{margin:8px 0 0;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:.9rem;z-index:30;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+dialog{border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--fg);padding:20px;width:min(440px,calc(100vw - 32px))}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+dialog form{display:flex;flex-direction:column;gap:10px}
+dialog input{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg)}
+.foot{margin-top:40px;color:var(--muted);font-size:.8rem;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.foot button{background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;padding:0;font-size:.8rem}
+@media (max-width:420px){
+  .card{grid-template-columns:60px 1fr;gap:12px}
+  .poster,.ph{width:60px}
+  .hero{grid-template-columns:72px 1fr;padding:16px}
+  .hero .poster,.hero .ph{width:72px}
+  .tabs button{padding:7px 10px}
+}
+</style>
+</head>
+<body>
+<div class="top gut">
+  <div class="wrap">
+    <h1 class="brand"><i><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 1v10l9-5z" fill="#16141a"/></svg></i>Leffavalitsin</h1>
+    <div class="tabs" role="group" aria-label="Näkymä">
+      <button type="button" id="tabList" aria-pressed="true">Ehdokkaat<span class="n" id="nCount">0</span></button>
+      <button type="button" id="tabCmp" aria-pressed="false">Vertailu</button>
+    </div>
+  </div>
+</div>
+
+<main class="gut">
+<div class="wrap">
+
+  <!-- Ehdokkaat -->
+  <section id="viewList">
+    <div class="intro">
+      <h2>Mitä tänään katsotaan?</h2>
+      <p>Lisää ehdokkaat yksi kerrallaan. Arvosanat haetaan heti, ja vertailu kertoo, mikä ehdokkaista sopii parhaiten siihen, mitä haluat katsoa.</p>
+    </div>
+    <form class="add" id="addForm" autocomplete="off">
+      <input id="addInput" type="text" placeholder="Elokuvan nimi" enterkeyhint="send" aria-label="Elokuvan nimi">
+      <button type="submit">Lisää</button>
+    </form>
+    <p class="hint">Nimen voi kirjoittaa suomeksi tai alkuperäisellä nimellä. Vuosi nimen perässä tarkentaa hakua. Voit myös liittää monta nimeä kerralla riveittäin.</p>
+
+    <div class="list" id="list"></div>
+    <div class="empty" id="empty">Ei vielä ehdokkaita. Lisää ensimmäinen elokuva yllä olevaan kenttään.</div>
+
+    <button class="cta" id="doneBtn" type="button" disabled>Valmis, näytä vertailu →</button>
+    <div class="tools">
+      <button class="ghost" id="shareBtn" type="button">Kopioi jakolinkki</button>
+      <button class="ghost" id="clearBtn" type="button">Tyhjennä lista</button>
+    </div>
+    <p class="err" id="clearAsk" hidden>Poistetaanko kaikki ehdokkaat? <button class="ghost" id="clearYes" type="button">Poista</button> <button class="ghost" id="clearNo" type="button">Peruuta</button></p>
+  </section>
+
+  <!-- Vertailu -->
+  <section id="viewCmp" hidden>
+    <div class="intro">
+      <h2>Vertailu</h2>
+      <p id="cmpIntro"></p>
+    </div>
+
+    <div class="sec">
+      <h3>Mitä haluat katsoa?</h3>
+      <div class="moods" id="moods"></div>
+    </div>
+
+    <div class="sec">
+      <h3>Painotus</h3>
+      <div class="weight">
+        <div class="lbls"><span>Muiden arviot</span><output id="wOut"></output><span>Oma kiinnostus</span></div>
+        <input type="range" id="w" min="0" max="100" step="10" value="30" aria-label="Oman kiinnostuksen painotus">
+        <div class="note" style="margin:4px 0 0">Oma kiinnostus annetaan tähdillä Ehdokkaat-näkymässä. Tähdittömäksi jätetty elokuva lasketaan neutraaliksi (3/5), jos muille on annettu tähtiä.</div>
+      </div>
+    </div>
+
+    <div class="sec" id="heroSec"></div>
+
+    <div class="sec">
+      <h3>Paras kategorioittain</h3>
+      <div class="cats" id="cats"></div>
+      <p class="note">Kategoriassa elokuvia verrataan vain saman lajityypin elokuviin, joten esimerkiksi komediaa ei aseteta draaman rinnalle. Sama elokuva voi näkyä useassa kategoriassa.</p>
+    </div>
+
+    <div class="sec">
+      <h3>Kaikki ehdokkaat</h3>
+      <div class="tablewrap"><table id="tbl"></table></div>
+    </div>
+
+    <div class="sec">
+      <details class="how">
+        <summary>Miten sopivuus lasketaan</summary>
+        <p>Muiden arviot: IMDb painaa 70 % ja kriitikot 30 %. Kriitikkoarvio on Rotten Tomatoesin ja Metacriticin keskiarvo. Jos kriitikkoarvioita ei ole, käytetään pelkkää IMDb:tä. IMDb-arvosana muunnetaan asteikolle 0–100 kertomalla kymmenellä.</p>
+        <p>Oma kiinnostus: 1 tähti = 0, 3 tähteä = 50 ja 5 tähteä = 100. Tähdittömäksi jätetty elokuva lasketaan kolmen tähden arvoiseksi, jos jollekin ehdokkaalle on annettu tähtiä. Liukusäädin määrää, kuinka paljon oma kiinnostus painaa sopivuudessa.</p>
+        <p>Painokertoimet 70/30 ovat sovelluksen valinta, eivät mikään virallinen kaava. Arvosanat haetaan OMDb-palvelusta, joka kokoaa ne IMDb:stä, Rotten Tomatoesista ja Metacriticista. Alle 5 000 äänen IMDb-arvosana merkitään epävarmaksi, koska pieni äänimäärä heiluttaa keskiarvoa.</p>
+      </details>
+    </div>
+  </section>
+
+  <div class="foot">
+    <span>Arvosanat: OMDb (IMDb, Rotten Tomatoes, Metacritic)</span>
+    <button type="button" id="keyBtn">OMDb-avain</button>
+  </div>
+</div>
+</main>
+
+<dialog id="keyDlg">
+  <form method="dialog">
+    <strong>OMDb-avain</strong>
+    <span style="color:var(--muted);font-size:.88rem">Sovelluksessa on valmiina avain. Jos sen päiväraja täyttyy, voit syöttää oman ilmaisen avaimen osoitteesta omdbapi.com.</span>
+    <input id="keyInput" autocomplete="off" spellcheck="false" placeholder="Tyhjä = oletusavain">
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="ghost" value="cancel" type="submit">Peruuta</button>
+      <button class="ghost" value="ok" type="submit" style="background:var(--fg);color:var(--bg);border-color:var(--fg)">Tallenna</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+"use strict";
+const DEFAULT_KEY = "a84aa3a3";
+const LOW_VOTES = 5000;
+const IMDB_SHARE = 0.7;
+
+const $ = id => document.getElementById(id);
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); }catch{ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch{} }
+};
+const apiKey = () => store.get("lv-key", "") || DEFAULT_KEY;
+
+/* ---------- Tila ---------- */
+// item: {uid, q, id, status: loading|ok|notfound|error, d (OMDb-tiedot), alts: [{id,Title,Year}], own: 0-5, msg}
+let items = store.get("lv-items", []).map(x => x.status === "loading" ? { ...x, status:"error", msg:"Haku keskeytyi." } : x);
+const cache = new Map(Object.entries(store.get("lv-cache", {})));
+let mood = "all", weight = store.get("lv-weight", 30), sortKey = "fit";
+let uidSeq = items.reduce((m, x) => Math.max(m, x.uid || 0), 0);
+function save(){
+  store.set("lv-items", items.map(({ uid, q, id, status, alts, own, msg, fi, via }) => ({ uid, q, id, status, alts, own, msg, fi, via })));
+  const keep = {}; items.forEach(x => { if(x.id && cache.has(x.id)) keep[x.id] = cache.get(x.id); });
+  store.set("lv-cache", keep);
+}
+items.forEach(x => { if(x.id && cache.has(x.id)) x.d = cache.get(x.id); });
+
+/* ---------- OMDb ---------- */
+async function omdb(params){
+  const u = new URL("https://www.omdbapi.com/");
+  u.searchParams.set("apikey", apiKey());
+  for(const [k, v] of Object.entries(params)) if(v != null && v !== "") u.searchParams.set(k, String(v));
+  let r;
+  try{ r = await fetch(u); }catch{
+    throw new Error(location.protocol === "https:"
+      ? "Arvosanapalveluun ei saatu yhteyttä. Tarkista verkkoyhteys, ja jos käytössä on mainosten esto, salli omdbapi.com."
+      : "Arvosanapalveluun ei saatu yhteyttä. Sovellus toimii vain verkko-osoitteesta (esim. GitHub Pages), ei tiedostona avattuna eikä esikatselussa.");
+  }
+  const d = await r.json().catch(() => ({ Response:"False", Error:"HTTP " + r.status }));
+  if(d.Response === "False" && /limit/i.test(d.Error || "")) throw new Error("OMDb-avaimen päiväraja on täynnä. Syötä oma avain sivun alalaidasta tai yritä huomenna.");
+  if(d.Response === "False" && /api key/i.test(d.Error || "")) throw new Error("OMDb-avain ei kelpaa. Uusi avain pitää aktivoida OMDb:n sähköpostin linkistä. Avaimen voi vaihtaa sivun alalaidasta.");
+  return d.Response === "True" ? d : null;
+}
+async function details(id){
+  if(cache.has(id)) return cache.get(id);
+  const d = await omdb({ i:id, plot:"short" });
+  if(d) cache.set(id, d);
+  return d;
+}
+const norm = s => String(s || "").toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "").replace(/&/g, "and").replace(/[^a-z0-9]+/g, " ").trim().replace(/^(the|a|an) /, "");
+
+function parseQuery(q){
+  const m = /^(.*?)[\s,(]+((?:18|19|20)\d\d)\)?\s*$/.exec(q.trim());
+  return m && m[1].trim() ? { title:m[1].trim(), year:m[2] } : { title:q.trim(), year:"" };
+}
+// Valitsee hakutuloksista parhaan: nimen täsmäys ja vuosi ratkaisevat, sitten OMDb:n järjestys.
+function pickBest(list, title, year){
+  const n = norm(title);
+  const scored = list.map((h, i) => {
+    let s = -i;
+    const hn = norm(h.Title);
+    if(hn === n) s += 50; else if(hn.startsWith(n)) s += 20; else if(hn.includes(n)) s += 10;
+    if(year && String(h.Year).startsWith(year)) s += 40;
+    if(h.Type === "movie") s += 3;
+    return [s, h];
+  });
+  scored.sort((a, b) => b[0] - a[0]);
+  return scored.map(x => x[1]);
+}
+
+/* ---------- Wikidata: suomenkieliset nimet ja ehdotukset ---------- */
+// Wikidata yhdistää elokuvan suomenkielisen nimen IMDb-tunnukseen (ominaisuus P345).
+async function wdApi(host, params){
+  const u = new URL("https://" + host + "/w/api.php");
+  for(const [k, v] of Object.entries({ ...params, format:"json", origin:"*" })) u.searchParams.set(k, v);
+  const r = await fetch(u); if(!r.ok) throw new Error("Wikidata HTTP " + r.status);
+  return r.json();
+}
+async function sparql(q){
+  const r = await fetch("https://query.wikidata.org/sparql?format=json&query=" + encodeURIComponent(q), { headers:{ Accept:"application/sparql-results+json" } });
+  if(!r.ok) throw new Error("Wikidata HTTP " + r.status);
+  return (await r.json()).results.bindings;
+}
+async function wdFilms(qids){
+  if(!qids.length) return [];
+  const rows = await sparql(`SELECT ?item ?imdb ?fi ?en (MIN(YEAR(?d)) AS ?y) WHERE {
+    VALUES ?item { ${qids.map(q => "wd:" + q).join(" ")} }
+    ?item wdt:P345 ?imdb . FILTER(STRSTARTS(?imdb, "tt"))
+    OPTIONAL { ?item rdfs:label ?fi . FILTER(LANG(?fi) = "fi") }
+    OPTIONAL { ?item rdfs:label ?en . FILTER(LANG(?en) = "en") }
+    OPTIONAL { ?item wdt:P577 ?d }
+  } GROUP BY ?item ?imdb ?fi ?en`);
+  const seen = new Set();
+  return rows.map(b => ({ q:b.item.value.split("/").pop(), id:b.imdb.value, fi:b.fi && b.fi.value, en:b.en && b.en.value, year:b.y ? String(b.y.value) : "" }))
+    .filter(x => !seen.has(x.id) && seen.add(x.id));
+}
+// Hakee ehdokkaat ensin nimistä (myös suomenkieliset ja vaihtoehtoiset nimet), sitten Wikipedian kirjoitusvirheitä sietävällä haulla.
+async function wdCandidates(title, year){
+  try{
+    const order = [];
+    const add = ids => ids.forEach(q => { if(!order.includes(q)) order.push(q); });
+    const [fi, en] = await Promise.all(["fi", "en"].map(lang => wdApi("www.wikidata.org", { action:"wbsearchentities", search:title, language:lang, uselang:lang, type:"item", limit:"12" }).catch(() => ({}))));
+    add([...(fi.search || []), ...(en.search || [])].map(x => x.id));
+    let films = await wdFilms(order.slice(0, 24));
+    if(!films.length){
+      const res = await Promise.all(["fi.wikipedia.org", "en.wikipedia.org"].map(h => wdApi(h, { action:"query", generator:"search", gsrsearch:title, gsrlimit:"10", prop:"pageprops", ppprop:"wikibase_item" }).catch(() => ({}))));
+      const ids = [];
+      res.forEach(r => Object.values((r.query && r.query.pages) || {}).sort((a, b) => a.index - b.index).forEach(pg => { if(pg.pageprops && pg.pageprops.wikibase_item) ids.push(pg.pageprops.wikibase_item); }));
+      add(ids); films = await wdFilms(ids.slice(0, 24));
+    }
+    const n = norm(title);
+    films.forEach(f => {
+      let sc = -order.indexOf(f.q) * 0.5;
+      for(const lbl of [f.fi, f.en]){
+        const l = norm(lbl); if(!l) continue;
+        if(l === n) sc = Math.max(sc, 100); else if(l.startsWith(n) || n.startsWith(l)) sc = Math.max(sc, 40); else if(l.includes(n)) sc = Math.max(sc, 20);
+      }
+      if(year && f.year){ const dy = Math.abs(+f.year - +year); sc += dy === 0 ? 40 : dy === 1 ? 15 : -20; }
+      f.score = sc;
+    });
+    return films.sort((a, b) => b.score - a.score).slice(0, 8);
+  }catch{ return []; }
+}
+const fiNameCache = store.get("lv-fi", {});
+async function finnishName(item){
+  if(!item.id || item.fi !== undefined) return;
+  if(item.id in fiNameCache){ item.fi = fiNameCache[item.id]; return; }
+  try{
+    const rows = await sparql(`SELECT ?fi WHERE { ?item wdt:P345 "${item.id}" ; rdfs:label ?fi . FILTER(LANG(?fi) = "fi") } LIMIT 1`);
+    const fi = rows[0] ? rows[0].fi.value : "";
+    item.fi = fi; fiNameCache[item.id] = fi; store.set("lv-fi", fiNameCache);
+  }catch{ /* Suomenkielinen nimi on lisätieto, joten virhe ohitetaan. */ }
+}
+const candLabel = c => {
+  const main = c.fi || c.en || c.id;
+  return main + (c.en && c.fi && norm(c.en) !== norm(c.fi) ? " / " + c.en : "") + (c.year ? " (" + c.year + ")" : "");
+};
+
+async function resolve(item){
+  const { title, year } = parseQuery(item.q);
+  try{
+    let list = [];
+    const s = await omdb({ s:title, y:year });
+    if(s && s.Search) list = s.Search.filter(h => h.Type === "movie" || h.Type === "series");
+    if(!list.length && year){ const s2 = await omdb({ s:title }); if(s2 && s2.Search) list = s2.Search.filter(h => h.Type === "movie" || h.Type === "series"); }
+    if(!list.length){
+      const t = await omdb({ t:title, y:year });
+      if(t) list = [{ Title:t.Title, Year:t.Year, imdbID:t.imdbID, Type:t.Type, Poster:t.Poster }];
+    }
+    const ranked = pickBest(list, title, year);
+    const omdbAlts = ranked.slice(0, 8).map(h => ({ id:h.imdbID, Title:h.Title, Year:h.Year }));
+    const n = norm(title);
+    const strong = ranked[0] && (norm(ranked[0].Title) === n || norm(ranked[0].Title).startsWith(n));
+    if(strong){ item.alts = omdbAlts; await setChoice(item, ranked[0].imdbID); return; }
+
+    // OMDb ei löytänyt selvää osumaa: kokeillaan suomenkielisiä ja vaihtoehtoisia nimiä Wikidatasta.
+    const cands = await wdCandidates(title, year);
+    const wdAlts = cands.map(c => ({ id:c.id, Title:candLabel(c), Year:"" }));
+    const merged = [...wdAlts, ...omdbAlts].filter((a, i, arr) => arr.findIndex(b => b.id === a.id) === i).slice(0, 8);
+    if(cands[0] && cands[0].score >= 100){
+      item.alts = merged; item.via = cands[0].fi && norm(cands[0].fi) === n ? "fi" : "";
+      await setChoice(item, cands[0].id); return;
+    }
+    if(ranked[0]){ item.alts = merged; await setChoice(item, ranked[0].imdbID); return; }
+    if(cands.length){ Object.assign(item, { status:"suggest", alts:wdAlts, msg:"Nimellä \"" + item.q + "\" ei löytynyt suoraa osumaa. Tarkoititko jotakin näistä?" }); return; }
+    Object.assign(item, { status:"notfound", msg:"Nimellä \"" + item.q + "\" ei löytynyt elokuvaa. Tarkista kirjoitusasu." });
+  }catch(e){
+    Object.assign(item, { status:"error", msg:e.message });
+  }
+}
+async function setChoice(item, id){
+  const d = await details(id);
+  if(!d){ Object.assign(item, { status:"error", msg:"Elokuvan tietoja ei saatu haettua." }); return; }
+  if(items.some(x => x !== item && x.id === id)){ Object.assign(item, { status:"error", msg:"\"" + d.Title + "\" on jo listalla.", dup:true }); return; }
+  Object.assign(item, { id, d, status:"ok", msg:"", fi:undefined });
+  finnishName(item).then(() => { save(); renderList(); if(!$("viewCmp").hidden) renderCompare(); });
+}
+
+async function addTitles(text){
+  const qs = text.split(/\n|;/).map(s => s.trim()).filter(Boolean);
+  for(const q of qs){
+    const item = { uid:++uidSeq, q, status:"loading", own:0, alts:[] };
+    items.unshift(item); renderList();
+    resolve(item).then(() => {
+      if(item.dup){ items = items.filter(y => y !== item); toast(item.msg); }
+      save(); renderList();
+    });
+  }
+}
+
+/* ---------- Arvosanojen tulkinta ---------- */
+const num = s => { const v = parseFloat(String(s || "").replace(",", "")); return isFinite(v) ? v : null; };
+function ratingsOf(d){
+  const out = { imdb:num(d.imdbRating), votes:num(String(d.imdbVotes || "").replace(/,/g, "")), rt:null, mc:null };
+  (d.Ratings || []).forEach(r => {
+    if(/Rotten/.test(r.Source)) out.rt = num(r.Value);
+    if(/Metacritic/.test(r.Source)) out.mc = num(r.Value);
+  });
+  if(out.mc == null && d.Metascore && d.Metascore !== "N/A") out.mc = num(d.Metascore);
+  return out;
+}
+const CATS = [
+  ["comedy", "Komedia", ["Comedy"]],
+  ["action", "Toiminta ja seikkailu", ["Action", "Adventure"]],
+  ["drama", "Draama", ["Drama"]],
+  ["thriller", "Jännitys ja rikos", ["Thriller", "Crime", "Mystery"]],
+  ["scifi", "Scifi ja fantasia", ["Sci-Fi", "Fantasy"]],
+  ["horror", "Kauhu", ["Horror"]],
+  ["romance", "Romantiikka", ["Romance"]],
+  ["family", "Animaatio ja perhe", ["Animation", "Family"]],
+  ["doc", "Dokumentti ja tositarina", ["Documentary", "Biography", "History"]],
+  ["war", "Sota ja western", ["War", "Western"]],
+  ["music", "Musiikki", ["Music", "Musical"]]
+];
+const GENRE_FI = { Comedy:"komedia", Action:"toiminta", Adventure:"seikkailu", Drama:"draama", Thriller:"jännitys", Crime:"rikos", Mystery:"mysteeri", "Sci-Fi":"scifi", Fantasy:"fantasia", Horror:"kauhu", Romance:"romantiikka", Animation:"animaatio", Family:"perhe", Documentary:"dokumentti", Biography:"elämäkerta", History:"historia", War:"sota", Western:"western", Music:"musiikki", Musical:"musikaali", Sport:"urheilu", "Film-Noir":"film noir", Short:"lyhytelokuva", News:"uutiset", "Reality-TV":"tosi-tv", "Talk-Show":"keskustelu", "Game-Show":"visailu" };
+const genresOf = d => String(d.Genre || "").split(",").map(s => s.trim()).filter(g => g && g !== "N/A");
+const catsOf = d => { const g = genresOf(d); return CATS.filter(c => c[2].some(x => g.includes(x))).map(c => c[0]); };
+
+function othersScore(r){
+  const crit = [r.rt, r.mc].filter(v => v != null);
+  if(r.imdb == null && !crit.length) return null;
+  const c = crit.length ? crit.reduce((a, b) => a + b, 0) / crit.length : null;
+  if(r.imdb == null) return c;
+  return c == null ? r.imdb * 10 : IMDB_SHARE * r.imdb * 10 + (1 - IMDB_SHARE) * c;
+}
+function fitScore(item){
+  const r = ratingsOf(item.d), o = othersScore(r);
+  // Jos jollekin ehdokkaalle on annettu tähtiä, tähdittömät saavat neutraalin 3/5, ettei arvioimatta jättäminen palkitse.
+  const anyRated = items.some(x => x.status === "ok" && x.own);
+  const own = item.own ? (item.own - 1) / 4 * 100 : anyRated ? 50 : null;
+  if(o == null && own == null) return null;
+  if(o == null) return own;
+  if(own == null) return o;
+  const w = weight / 100;
+  return (1 - w) * o + w * own;
+}
+
+/* ---------- Apu ---------- */
+const el = (tag, cls, text) => { const e = document.createElement(tag); if(cls) e.className = cls; if(text != null) e.textContent = text; return e; };
+const fmt1 = v => v == null ? "–" : v.toLocaleString("fi-FI", { minimumFractionDigits:1, maximumFractionDigits:1 });
+const fmt0 = v => v == null ? "–" : Math.round(v).toLocaleString("fi-FI");
+const votesTxt = v => v == null ? "" : v >= 1e6 ? fmt1(v / 1e6) + " milj." : v >= 1000 ? Math.round(v / 1000).toLocaleString("fi-FI") + " t." : String(v);
+function posterEl(d){
+  if(d && d.Poster && d.Poster !== "N/A"){ const im = el("img", "poster"); im.src = d.Poster; im.alt = ""; im.loading = "lazy"; im.onerror = () => im.replaceWith(el("div", "ph")); return im; }
+  return el("div", "ph");
+}
+function scoresEl(d, compact){
+  const r = ratingsOf(d), box = el("div", "scores");
+  const i = el("div", "sc imdb"); i.append(el("b", null, fmt1(r.imdb)), el("small", null, "IMDb" + (r.votes ? " · " + votesTxt(r.votes) : ""))); box.append(i);
+  if(r.rt != null){ const s = el("div", "sc rt"); s.append(el("b", null, fmt0(r.rt) + " %"), el("small", null, "Rotten T.")); box.append(s); }
+  if(r.mc != null){ const s = el("div", "sc mc"); s.append(el("b", null, fmt0(r.mc)), el("small", null, "Metacritic")); box.append(s); }
+  return box;
+}
+function toast(t){ const e = $("toast"); e.textContent = t; e.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => e.hidden = true, 2200); }
+const starSvg = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg>';
+
+/* ---------- Ehdokaslista ---------- */
+function renderList(){
+  const box = $("list"); box.textContent = "";
+  items.forEach(item => box.append(cardEl(item)));
+  const ok = items.filter(x => x.status === "ok").length;
+  $("nCount").textContent = ok;
+  $("empty").hidden = items.length > 0;
+  $("doneBtn").disabled = ok < 1;
+  $("doneBtn").textContent = ok >= 2 ? "Valmis, vertaa " + ok + " elokuvaa →" : "Valmis, näytä vertailu →";
+}
+function removeBtn(item){
+  const x = el("button", "x", "×"); x.type = "button"; x.setAttribute("aria-label", "Poista " + (item.d ? item.d.Title : item.q));
+  x.onclick = () => { items = items.filter(y => y !== item); save(); renderList(); };
+  return x;
+}
+function cardEl(item){
+  if(item.status === "loading"){
+    const c = el("div", "card bad"); const s = el("div", "state"); s.append(el("div", "spin"), el("span", null, "Haetaan \"" + item.q + "\"…")); c.append(s); return c;
+  }
+  if(item.status !== "ok"){
+    const c = el("div", "card bad"); c.append(removeBtn(item));
+    const b = el("div", "body"); b.append(el("p", "ttl", item.q), el("p", item.status === "suggest" ? "sub" : "err", item.msg || "Haku epäonnistui."));
+    if(item.status === "suggest" && item.alts && item.alts.length){
+      const ul = el("ul", "sugg");
+      item.alts.forEach(a => { const li = el("li"); const ab = el("button", null, a.Title + (a.Year ? " (" + a.Year + ")" : "")); ab.type = "button";
+        ab.onclick = async () => { item.status = "loading"; renderList(); try{ await setChoice(item, a.id); }catch(e){ Object.assign(item, { status:"error", msg:e.message }); } save(); renderList(); };
+        li.append(ab); ul.append(li); });
+      b.append(ul);
+    }
+    if(!item.dup){
+      const f = el("form", "retry"); const inp = el("input"); inp.value = item.q; inp.setAttribute("aria-label", "Korjaa nimi");
+      const go = el("button", null, "Hae uudelleen"); go.type = "submit";
+      f.append(inp, go);
+      f.onsubmit = e => { e.preventDefault(); if(!inp.value.trim()) return; item.q = inp.value.trim(); item.status = "loading"; renderList(); resolve(item).then(() => { save(); renderList(); }); };
+      b.append(f);
+    }
+    c.append(b); return c;
+  }
+  const d = item.d, r = ratingsOf(d);
+  const c = el("article", "card"); c.append(posterEl(d), removeBtn(item));
+  const b = el("div", "body");
+  b.append(el("h3", "ttl", d.Title));
+  if(item.fi && norm(item.fi) !== norm(d.Title)) b.append(el("div", "fi", item.fi));
+  b.append(el("div", "sub", [d.Year, d.Runtime && d.Runtime !== "N/A" ? d.Runtime : null, d.Director && d.Director !== "N/A" ? "ohj. " + d.Director : null].filter(Boolean).join(" · ")));
+  const gs = el("div", "genres"); genresOf(d).forEach(g => gs.append(el("span", "g", GENRE_FI[g] || g))); b.append(gs);
+  b.append(scoresEl(d));
+  if(r.votes != null && r.votes < LOW_VOTES) b.append(el("div", "low", "Vähän IMDb-ääniä (" + fmt0(r.votes) + "), arvosana on epävarma."));
+  // Oma kiinnostus
+  const st = el("div", "stars"); st.append(el("span", null, "Oma kiinnostus"));
+  for(let k = 1; k <= 5; k++){
+    const sb = el("button", "star" + (item.own >= k ? " on" : "")); sb.type = "button"; sb.innerHTML = starSvg;
+    sb.setAttribute("aria-label", k + " / 5"); sb.setAttribute("aria-pressed", item.own === k);
+    sb.onclick = () => { item.own = item.own === k ? 0 : k; save(); renderList(); };
+    st.append(sb);
+  }
+  b.append(st);
+  // Vaihtoehdot, jos haku osui väärään
+  const alts = (item.alts || []).filter(a => a.id !== item.id);
+  if(alts.length){
+    const det = el("details", "alt"); det.append(el("summary", null, "Väärä elokuva? Vaihda (" + alts.length + ")"));
+    const ul = el("ul");
+    alts.forEach(a => { const li = el("li"); const ab = el("button", null, a.Title + " (" + a.Year + ")"); ab.type = "button";
+      ab.onclick = async () => { item.status = "loading"; renderList(); try{ await setChoice(item, a.id); }catch(e){ Object.assign(item, { status:"error", msg:e.message }); } save(); renderList(); };
+      li.append(ab); ul.append(li); });
+    det.append(ul); b.append(det);
+  }
+  c.append(b); return c;
+}
+
+/* ---------- Vertailu ---------- */
+function okItems(){ return items.filter(x => x.status === "ok" && x.d); }
+function renderCompare(){
+  const all = okItems();
+  const catCount = {}; all.forEach(x => catsOf(x.d).forEach(c => catCount[c] = (catCount[c] || 0) + 1));
+  if(mood !== "all" && !catCount[mood]) mood = "all";
+  // Mieliala
+  const mb = $("moods"); mb.textContent = "";
+  const addMood = (key, label, n) => { const b = el("button", "mood"); b.type = "button"; b.setAttribute("aria-pressed", mood === key); b.append(label, el("span", "c", n)); b.onclick = () => { mood = key; renderCompare(); }; mb.append(b); };
+  addMood("all", "Mikä tahansa", all.length);
+  CATS.filter(c => catCount[c[0]]).forEach(c => addMood(c[0], c[1], catCount[c[0]]));
+  $("wOut").textContent = "oma " + weight + " %";
+  $("w").value = weight;
+  const rated = all.filter(x => x.own).length;
+  $("cmpIntro").textContent = all.length + " ehdokasta. " + (rated ? "Oma kiinnostus annettu " + rated + " elokuvalle." : "Anna ehdokkaille tähtiä, jos haluat oman kiinnostuksesi mukaan.");
+
+  const pool = (mood === "all" ? all : all.filter(x => catsOf(x.d).includes(mood))).map(x => ({ x, f:fitScore(x), r:ratingsOf(x.d) }));
+  pool.sort((a, b) => (b.f ?? -1) - (a.f ?? -1));
+  renderHero(pool, all);
+  renderCats(all);
+  renderTable(all);
+}
+
+function reasonText(p, pool){
+  const r = p.r, out = [];
+  if(r.imdb != null) out.push("IMDb " + fmt1(r.imdb) + (r.votes ? " (" + votesTxt(r.votes) + " ääntä)" : ""));
+  const crit = []; if(r.rt != null) crit.push("Rotten Tomatoes " + fmt0(r.rt) + " %"); if(r.mc != null) crit.push("Metacritic " + fmt0(r.mc));
+  let s = out.join("") + (crit.length ? ", kriitikoilta " + crit.join(" ja ") : "") + ".";
+  const bestImdb = pool.reduce((m, q) => q.r.imdb != null && (m == null || q.r.imdb > m) ? q.r.imdb : m, null);
+  if(r.imdb != null && r.imdb === bestImdb && pool.length > 1) s += " Ryhmän korkein IMDb-arvosana.";
+  if(p.x.own) s += " Oma kiinnostuksesi " + p.x.own + "/5.";
+  if(r.votes != null && r.votes < LOW_VOTES) s += " Huom. vähän IMDb-ääniä.";
+  return s;
+}
+function renderHero(pool, all){
+  const sec = $("heroSec"); sec.textContent = "";
+  if(!pool.length){ sec.append(el("p", "err", "Ei ehdokkaita tähän valintaan.")); return; }
+  const best = pool[0], d = best.x.d;
+  sec.append(el("h3", null, mood === "all" ? "Suositus" : "Suositus: " + CATS.find(c => c[0] === mood)[1].toLowerCase()));
+  const h = el("article", "hero"); h.append(posterEl(d));
+  const b = el("div");
+  b.append(el("div", "k", "Paras sopivuus" + (pool.length > 1 ? " " + pool.length + " ehdokkaasta" : "")));
+  b.append(el("h4", null, d.Title));
+  if(best.x.fi && norm(best.x.fi) !== norm(d.Title)) b.append(el("div", "fi", best.x.fi));
+  b.append(el("div", "fit", [d.Year, genresOf(d).map(g => GENRE_FI[g] || g).join(", "), d.Runtime && d.Runtime !== "N/A" ? d.Runtime : null].filter(Boolean).join(" · ") + " · sopivuus " + fmt0(best.f) + "/100"));
+  const sc = scoresEl(d); sc.style.marginTop = "10px"; b.append(sc);
+  b.append(el("p", null, reasonText(best, pool)));
+  if(d.Plot && d.Plot !== "N/A") b.append(el("p", null, d.Plot));
+  if(pool[1] && best.f != null && pool[1].f != null && best.f - pool[1].f < 3) b.append(el("p", null, "Tiukka kisa: " + pool[1].x.d.Title + " on vain " + fmt1(best.f - pool[1].f) + " pistettä perässä."));
+  const a = el("a", null, "Avaa IMDb:ssä ↗"); a.href = "https://www.imdb.com/title/" + d.imdbID + "/"; a.target = "_blank"; a.rel = "noopener"; a.style.cssText = "color:inherit;display:inline-block;margin-top:10px;font-weight:600";
+  b.append(a);
+  h.append(b); sec.append(h);
+}
+function renderCats(all){
+  const box = $("cats"); box.textContent = "";
+  CATS.forEach(([key, label]) => {
+    const list = all.filter(x => catsOf(x.d).includes(key)).map(x => ({ x, f:fitScore(x), r:ratingsOf(x.d) }));
+    if(!list.length) return;
+    list.sort((a, b) => (b.f ?? -1) - (a.f ?? -1));
+    const c = el("section", "cat");
+    const hd = el("header"); hd.append(el("b", null, label), el("span", null, list.length === 1 ? "1 elokuva" : list.length + " elokuvaa")); c.append(hd);
+    list.forEach((p, i) => {
+      const row = el("div", "rank" + (i === 0 ? " top" : ""));
+      row.append(el("span", "pos", i + 1 + "."));
+      const nm = el("span", "nm", p.x.d.Title); nm.append(el("small", null, [p.x.fi && norm(p.x.fi) !== norm(p.x.d.Title) ? p.x.fi : null, p.x.d.Year, p.x.own ? "oma " + p.x.own + "/5" : null].filter(Boolean).join(" · "))); row.append(nm);
+      const v = el("span", "vals"); v.append(el("span", "i", fmt1(p.r.imdb)), el("span", "f", fmt0(p.f))); row.append(v);
+      c.append(row);
+    });
+    box.append(c);
+  });
+}
+const COLS = [
+  ["title", "Elokuva", x => x.d.Title, p => p.x.d.Title + " (" + p.x.d.Year + ")"],
+  ["imdb", "IMDb", x => ratingsOf(x.d).imdb, p => fmt1(p.r.imdb)],
+  ["votes", "Ääniä", x => ratingsOf(x.d).votes, p => votesTxt(p.r.votes)],
+  ["rt", "RT %", x => ratingsOf(x.d).rt, p => p.r.rt == null ? "–" : fmt0(p.r.rt)],
+  ["mc", "Meta", x => ratingsOf(x.d).mc, p => fmt0(p.r.mc)],
+  ["own", "Oma", x => x.own || null, p => p.x.own ? p.x.own + "/5" : "–"],
+  ["fit", "Sopivuus", x => fitScore(x), p => fmt0(p.f)]
+];
+function renderTable(all){
+  const t = $("tbl"); t.textContent = "";
+  const col = COLS.find(c => c[0] === sortKey);
+  const rows = all.map(x => ({ x, f:fitScore(x), r:ratingsOf(x.d), k:col[2](x) }));
+  rows.sort((a, b) => sortKey === "title" ? String(a.k).localeCompare(String(b.k), "fi") : (b.k ?? -1) - (a.k ?? -1));
+  const thead = el("thead"), tr = el("tr");
+  COLS.forEach(([k, label]) => { const th = el("th", null, label); th.scope = "col"; if(k === sortKey) th.setAttribute("aria-sort", k === "title" ? "ascending" : "descending"); th.tabIndex = 0;
+    const go = () => { sortKey = k; renderTable(all); }; th.onclick = go; th.onkeydown = e => { if(e.key === "Enter") go(); }; tr.append(th); });
+  thead.append(tr); t.append(thead);
+  const tb = el("tbody");
+  rows.forEach(p => { const r = el("tr"); COLS.forEach(([k, , , show]) => r.append(el("td", k === "imdb" ? "imdbc" : null, show(p)))); tb.append(r); });
+  t.append(tb);
+}
+
+/* ---------- Näkymät ---------- */
+function show(view){
+  const cmp = view === "cmp";
+  $("viewList").hidden = cmp; $("viewCmp").hidden = !cmp;
+  $("tabList").setAttribute("aria-pressed", !cmp); $("tabCmp").setAttribute("aria-pressed", cmp);
+  if(cmp) renderCompare();
+  window.scrollTo({ top:0 });
+}
+$("tabList").onclick = () => show("list");
+$("tabCmp").onclick = () => { if(!okItems().length){ toast("Lisää ensin ehdokkaita."); return; } show("cmp"); };
+$("doneBtn").onclick = () => show("cmp");
+$("w").oninput = e => { weight = +e.target.value; store.set("lv-weight", weight); renderCompare(); };
+
+$("addForm").onsubmit = e => {
+  e.preventDefault();
+  const v = $("addInput").value; if(!v.trim()) return;
+  $("addInput").value = ""; addTitles(v);
+};
+$("addInput").addEventListener("paste", e => {
+  const t = (e.clipboardData || window.clipboardData).getData("text");
+  if(t && t.includes("\n")){ e.preventDefault(); addTitles(t); }
+});
+
+/* ---------- Jakaminen ---------- */
+$("shareBtn").onclick = async () => {
+  const ids = okItems().map(x => x.id + (x.own ? "." + x.own : ""));
+  if(!ids.length){ toast("Lista on tyhjä."); return; }
+  const url = location.origin + location.pathname + "#lista=" + ids.join(",");
+  try{ await navigator.clipboard.writeText(url); toast("Jakolinkki kopioitu."); }
+  catch{ prompt("Kopioi linkki:", url); }
+};
+async function loadShared(){
+  const m = /lista=([^&]+)/.exec(location.hash); if(!m) return;
+  const ids = decodeURIComponent(m[1]).split(",").map(s => /^(tt\d+)(?:\.(\d))?$/.exec(s.trim())).filter(Boolean);
+  history.replaceState(null, "", location.pathname);
+  for(const [, id, own] of ids){
+    if(items.some(x => x.id === id)) continue;
+    const item = { uid:++uidSeq, q:id, status:"loading", own:own ? +own : 0, alts:[] };
+    items.push(item); renderList();
+    try{ await setChoice(item, id); }catch(e){ Object.assign(item, { status:"error", msg:e.message }); }
+    save(); renderList();
+  }
+  toast("Jaettu lista ladattu.");
+}
+
+$("clearBtn").onclick = () => { if(items.length) $("clearAsk").hidden = false; };
+$("clearNo").onclick = () => $("clearAsk").hidden = true;
+$("clearYes").onclick = () => { items = []; save(); renderList(); $("clearAsk").hidden = true; };
+$("keyBtn").onclick = () => { $("keyInput").value = store.get("lv-key", ""); $("keyDlg").showModal(); };
+$("keyDlg").addEventListener("close", () => { if($("keyDlg").returnValue === "ok"){ store.set("lv-key", $("keyInput").value.trim()); toast("Avain tallennettu."); } });
+
+renderList();
+loadShared();
+</script>
+</body>
+</html>
