@@ -194,6 +194,13 @@ details.how p{margin:8px 0 0;color:var(--muted)}
 .tile .ov{font-size:.8rem;color:var(--muted);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
 .tile .ov.open{display:block}
 .more{margin-top:16px;width:100%}
+.seg2{display:grid;grid-template-columns:1fr 1fr;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:3px}
+.seg2 button{border:0;background:none;padding:9px;border-radius:9px;font-weight:600;cursor:pointer}
+.seg2 button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.trl{font-size:.82rem;font-weight:600;color:var(--accent);text-decoration:none;align-self:flex-start}
+.trl.wait{color:var(--muted);font-weight:500}
+.hero .trl{color:inherit;margin-right:14px}
+.hero .provtxt span{background:transparent;color:inherit;border-color:color-mix(in srgb,var(--bg) 40%,transparent)}
 .setup{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px}
 .setup ol{margin:0;padding-left:20px;color:var(--muted);font-size:.9rem}
 .setup form{display:flex;gap:8px}
@@ -241,6 +248,12 @@ dialog input{font:inherit;padding:10px 12px;border:1px solid var(--line);border-
     <div class="sec" id="setup" hidden></div>
     <div id="browseUi">
       <div class="sec">
+        <div class="seg2" role="group" aria-label="Nimikkeen tyyppi">
+          <button type="button" id="bTypeMovie" aria-pressed="true">Elokuvat</button>
+          <button type="button" id="bTypeTv" aria-pressed="false">Sarjat</button>
+        </div>
+      </div>
+      <div class="sec">
         <h3>Alustat</h3>
         <div class="plats" id="plats"></div>
       </div>
@@ -268,6 +281,7 @@ dialog input{font:inherit;padding:10px 12px;border:1px solid var(--line);border-
         </form>
         <ul class="people" id="people" hidden></ul>
         <div id="actChip"></div>
+        <p class="note" id="actNote" hidden>Sarjoissa näyttelijähaku tarkistaa näyttelijän 30 tunnetuimman sarjan saatavuuden.</p>
       </div>
       <div class="status" id="bStatus" hidden style="margin-top:16px"><div class="spin"></div><span id="bStatusText">Haetaan…</span></div>
       <p class="err" id="bErr" hidden style="margin-top:16px"></p>
@@ -322,6 +336,11 @@ dialog input{font:inherit;padding:10px 12px;border:1px solid var(--line);border-
         <input type="range" id="w" min="0" max="100" step="10" value="30" aria-label="Oman kiinnostuksen painotus">
         <div class="note" style="margin:4px 0 0">Oma kiinnostus annetaan tähdillä Ehdokkaat-näkymässä. Tähdittömäksi jätetty elokuva lasketaan neutraaliksi (3/5), jos muille on annettu tähtiä.</div>
       </div>
+    </div>
+
+    <div class="sec">
+      <h3>Aikaa käytössä</h3>
+      <div class="moods" id="durs"></div>
     </div>
 
     <div class="sec" id="heroSec"></div>
@@ -400,7 +419,7 @@ const cache = new Map(Object.entries(store.get("lv-cache", {})));
 let mood = "all", weight = store.get("lv-weight", 30), sortKey = "fit";
 let uidSeq = items.reduce((m, x) => Math.max(m, x.uid || 0), 0);
 function save(){
-  store.set("lv-items", items.map(({ uid, q, id, status, alts, own, msg, fi, via, prov, fiPreset, tmdb }) => ({ uid, q, id, status, alts, own, msg, fi, via, prov, fiPreset, tmdb })));
+  store.set("lv-items", items.map(({ uid, q, id, status, alts, own, msg, fi, via, prov, fiPreset, tmdb, ttype, trailer }) => ({ uid, q, id, status, alts, own, msg, fi, via, prov, fiPreset, tmdb, ttype, trailer })));
   const keep = {}; items.forEach(x => { if(x.id && cache.has(x.id)) keep[x.id] = cache.get(x.id); });
   store.set("lv-cache", keep);
 }
@@ -553,10 +572,11 @@ async function setChoice(item, id){
   const d = await details(id);
   if(!d){ Object.assign(item, { status:"error", msg:"Elokuvan tietoja ei saatu haettua." }); return; }
   if(items.some(x => x !== item && x.id === id)){ Object.assign(item, { status:"error", msg:"\"" + d.Title + "\" on jo listalla.", dup:true }); return; }
-  Object.assign(item, { id, d, status:"ok", msg:"", fi:item.fiPreset, prov:item.provPreset || undefined });
+  if(item.id && item.id !== id){ item.tmdb = undefined; item.ttype = undefined; item.provPreset = undefined; item.fiPreset = undefined; }
+  Object.assign(item, { id, d, status:"ok", msg:"", fi:item.fiPreset, prov:item.provPreset || undefined, trailer:undefined });
   const refresh = () => { save(); renderList(); if(!$("viewCmp").hidden) renderCompare(); };
   finnishName(item).then(refresh);
-  if(!item.prov) providersFor(item).then(refresh);
+  providersFor(item).then(refresh);
 }
 
 async function addTitles(text){
@@ -684,6 +704,7 @@ function cardEl(item){
   const gs = el("div", "genres"); genresOf(d).forEach(g => gs.append(el("span", "g", GENRE_FI[g] || g))); b.append(gs);
   b.append(scoresEl(d));
   if(item.prov && item.prov.length) b.append(provTxt(item.prov));
+  if(item.trailer) b.append(trailerLink(item.trailer));
   if(r.votes != null && r.votes < LOW_VOTES) b.append(el("div", "low", "Vähän IMDb-ääniä (" + fmt0(r.votes) + "), arvosana on epävarma."));
   // Oma kiinnostus
   const st = el("div", "stars"); st.append(el("span", null, "Oma kiinnostus"));
@@ -709,8 +730,15 @@ function cardEl(item){
 
 /* ---------- Vertailu ---------- */
 function okItems(){ return items.filter(x => x.status === "ok" && x.d); }
+let maxDur = store.get("lv-maxdur", 0);
+const DURS = [[0, "Ei rajaa"], [90, "enintään 1,5 h"], [120, "enintään 2 h"], [150, "enintään 2,5 h"]];
+const runtimeMin = d => { const v = parseInt(String(d.Runtime || "")); return isFinite(v) ? v : null; };
 function renderCompare(){
-  const all = okItems();
+  const every = okItems();
+  // Kestoraja: sarjoilla kesto on jakson pituus. Tuntematon kesto ei karsi.
+  const all = every.filter(x => !maxDur || runtimeMin(x.d) == null || runtimeMin(x.d) <= maxDur);
+  const db = $("durs"); db.textContent = "";
+  DURS.forEach(([v, label]) => { const b = el("button", "mood", label); b.type = "button"; b.setAttribute("aria-pressed", maxDur === v); b.onclick = () => { maxDur = v; store.set("lv-maxdur", v); renderCompare(); }; db.append(b); });
   const catCount = {}; all.forEach(x => catsOf(x.d).forEach(c => catCount[c] = (catCount[c] || 0) + 1));
   if(mood !== "all" && !catCount[mood]) mood = "all";
   // Mieliala
@@ -721,7 +749,8 @@ function renderCompare(){
   $("wOut").textContent = "oma " + weight + " %";
   $("w").value = weight;
   const rated = all.filter(x => x.own).length;
-  $("cmpIntro").textContent = all.length + " ehdokasta. " + (rated ? "Oma kiinnostus annettu " + rated + " elokuvalle." : "Anna ehdokkaille tähtiä, jos haluat oman kiinnostuksesi mukaan.");
+  const hidden = every.length - all.length;
+  $("cmpIntro").textContent = (all.length === 1 ? "1 ehdokas" : all.length + " ehdokasta") + (hidden ? " (" + hidden + " karsittu kestorajalla)" : "") + ". " + (rated ? "Oma kiinnostus annettu " + rated + " ehdokkaalle." : "Anna ehdokkaille tähtiä, jos haluat oman kiinnostuksesi mukaan.");
 
   const pool = (mood === "all" ? all : all.filter(x => catsOf(x.d).includes(mood))).map(x => ({ x, f:fitScore(x), r:ratingsOf(x.d) }));
   pool.sort((a, b) => (b.f ?? -1) - (a.f ?? -1));
@@ -743,7 +772,7 @@ function reasonText(p, pool){
 }
 function renderHero(pool, all){
   const sec = $("heroSec"); sec.textContent = "";
-  if(!pool.length){ sec.append(el("p", "err", "Ei ehdokkaita tähän valintaan.")); return; }
+  if(!pool.length){ sec.append(el("p", "err", "Ei ehdokkaita tähän valintaan." + (maxDur ? " Kokeile väljempää kestorajaa." : ""))); return; }
   const best = pool[0], d = best.x.d;
   sec.append(el("h3", null, mood === "all" ? "Suositus" : "Suositus: " + CATS.find(c => c[0] === mood)[1].toLowerCase()));
   const h = el("article", "hero"); h.append(posterEl(d));
@@ -757,8 +786,10 @@ function renderHero(pool, all){
   b.append(el("p", null, reasonText(best, pool)));
   if(d.Plot && d.Plot !== "N/A") b.append(el("p", null, d.Plot));
   if(pool[1] && best.f != null && pool[1].f != null && best.f - pool[1].f < 3) b.append(el("p", null, "Tiukka kisa: " + pool[1].x.d.Title + " on vain " + fmt1(best.f - pool[1].f) + " pistettä perässä."));
-  const a = el("a", null, "Avaa IMDb:ssä ↗"); a.href = "https://www.imdb.com/title/" + d.imdbID + "/"; a.target = "_blank"; a.rel = "noopener"; a.style.cssText = "color:inherit;display:inline-block;margin-top:10px;font-weight:600";
-  b.append(a);
+  const links = el("div"); links.style.marginTop = "10px";
+  if(best.x.trailer) links.append(trailerLink(best.x.trailer));
+  const a = el("a", null, "Avaa IMDb:ssä ↗"); a.href = "https://www.imdb.com/title/" + d.imdbID + "/"; a.target = "_blank"; a.rel = "noopener"; a.style.cssText = "color:inherit;display:inline-block;font-weight:600";
+  links.append(a); b.append(links);
   h.append(b); sec.append(h);
 }
 function renderCats(all){
@@ -857,28 +888,35 @@ async function tmdb(path, params = {}){
   if(!r.ok) throw new Error("TMDB-virhe (HTTP " + r.status + ").");
   return r.json();
 }
-let bInit = false, provMap = null, genres = [], bSel = store.get("lv-plats", PLATFORMS.map(p => p.key));
+let bInit = false, bType = store.get("lv-btype", "movie"), provMaps = {}, genreMap = {}, bSel = store.get("lv-plats", PLATFORMS.map(p => p.key));
 let actor = null, bPages = {}, bResults = [], bSeq = 0;
+const provMapOf = () => provMaps[bType] || {};
+// Keskustelu-, uutis- ja tositelevisio-ohjelmat jätetään sarjoista pois.
+const TV_EXCLUDE = "10767,10763,10764";
 
-async function loadProviderMap(){
-  const c = store.get("lv-provmap", null);
+async function loadProviderMap(type){
+  const ck = "lv-provmap-" + type;
+  const c = store.get(ck, null);
   if(c && Date.now() - c.t < 7 * 864e5) return c.map;
-  const d = await tmdb("/watch/providers/movie", { watch_region:"FI" });
+  const d = await tmdb("/watch/providers/" + type, { watch_region:"FI" });
   const map = {};
   PLATFORMS.forEach(p => {
     const hits = (d.results || []).filter(x => p.re.test(x.provider_name.trim()));
     map[p.key] = { ids:hits.map(h => h.provider_id), logo:hits[0] ? hits[0].logo_path : null, names:hits.map(h => h.provider_name) };
   });
-  store.set("lv-provmap", { t:Date.now(), map });
+  store.set(ck, { t:Date.now(), map });
   return map;
 }
-async function loadGenres(){
-  const c = store.get("lv-genres", null);
+async function loadGenres(type){
+  const ck = "lv-genres-" + type;
+  const c = store.get(ck, null);
   if(c && Date.now() - c.t < 30 * 864e5) return c.g;
-  const d = await tmdb("/genre/movie/list");
-  store.set("lv-genres", { t:Date.now(), g:d.genres || [] });
-  return d.genres || [];
+  const d = await tmdb("/genre/" + type + "/list");
+  const g = (d.genres || []).filter(x => type !== "tv" || !TV_EXCLUDE.split(",").includes(String(x.id)));
+  store.set(ck, { t:Date.now(), g });
+  return g;
 }
+function clearTmdbCache(){ ["movie", "tv"].forEach(t => { store.set("lv-provmap-" + t, null); store.set("lv-genres-" + t, null); }); provMaps = {}; genreMap = {}; }
 
 function renderSetup(){
   const s = $("setup"); s.textContent = "";
@@ -889,10 +927,20 @@ function renderSetup(){
   box.append(ol);
   const f = el("form"); const inp = el("input"); inp.placeholder = "TMDB-avain"; inp.setAttribute("aria-label", "TMDB-avain"); inp.spellcheck = false;
   const b = el("button", "ghost", "Tallenna"); b.type = "submit"; f.append(inp, b);
-  f.onsubmit = e => { e.preventDefault(); if(!inp.value.trim()) return; store.set("lv-tmdb", inp.value.trim()); store.set("lv-provmap", null); bInit = false; initBrowse(); };
+  f.onsubmit = e => { e.preventDefault(); if(!inp.value.trim()) return; store.set("lv-tmdb", inp.value.trim()); clearTmdbCache(); bInit = false; initBrowse(); };
   box.append(f); s.append(box);
 }
 
+async function ensureType(){
+  if(!provMaps[bType] || !genreMap[bType]){
+    const [pm, g] = await Promise.all([loadProviderMap(bType), loadGenres(bType)]);
+    provMaps[bType] = pm; genreMap[bType] = g;
+  }
+  const gs = $("bGenre"); gs.length = 1; gs.value = "";
+  genreMap[bType].forEach(g => { const o = el("option", null, g.name.charAt(0).toUpperCase() + g.name.slice(1)); o.value = g.id; gs.append(o); });
+  $("bTypeMovie").setAttribute("aria-pressed", bType === "movie"); $("bTypeTv").setAttribute("aria-pressed", bType === "tv");
+  $("actNote").hidden = bType !== "tv";
+}
 async function initBrowse(){
   const has = !!tmdbKey();
   $("setup").hidden = has; $("browseUi").hidden = !has;
@@ -900,21 +948,25 @@ async function initBrowse(){
   if(bInit){ if(bResults.length) renderGrid(); return; }
   bInit = true;
   bStatus("Haetaan alustoja…");
-  try{
-    [provMap, genres] = await Promise.all([loadProviderMap(), loadGenres()]);
-  }catch(e){ bInit = false; bStatus(""); bError(e.message); return; }
-  const gs = $("bGenre"); gs.length = 1;
-  genres.forEach(g => { const o = el("option", null, g.name.charAt(0).toUpperCase() + g.name.slice(1)); o.value = g.id; gs.append(o); });
+  try{ await ensureType(); }
+  catch(e){ bInit = false; bStatus(""); bError(e.message); return; }
   renderPlats();
   runDiscover(true);
+}
+async function setType(t){
+  if(t === bType) return;
+  bType = t; store.set("lv-btype", t);
+  bStatus("Haetaan…");
+  try{ await ensureType(); }catch(e){ bStatus(""); bError(e.message); return; }
+  renderPlats(); runDiscover(true);
 }
 function bStatus(t){ $("bStatusText").textContent = t || ""; $("bStatus").hidden = !t; }
 function bError(t){ $("bErr").textContent = t || ""; $("bErr").hidden = !t; }
 
 function renderPlats(){
-  const box = $("plats"); box.textContent = "";
+  const box = $("plats"); box.textContent = ""; const pmap = provMapOf();
   PLATFORMS.forEach(p => {
-    const m = provMap[p.key], ok = m && m.ids.length;
+    const m = pmap[p.key], ok = m && m.ids.length;
     const b = el("button", "plat"); b.type = "button";
     if(ok && m.logo){ const im = el("img"); im.src = IMG + "w92" + m.logo; im.alt = ""; b.append(im); } else b.append(el("span", "lg"));
     b.append(p.label);
@@ -927,27 +979,38 @@ function renderPlats(){
     box.append(b);
   });
 }
-const activePlats = () => PLATFORMS.filter(p => bSel.includes(p.key) && provMap[p.key] && provMap[p.key].ids.length);
+const activePlats = () => { const pmap = provMapOf(); return PLATFORMS.filter(p => bSel.includes(p.key) && pmap[p.key] && pmap[p.key].ids.length); };
 
-// Hakee jokaiselta valitulta alustalta erikseen, jotta jokaiseen elokuvaan voidaan merkitä, millä alustalla se on.
+// Elokuva ja sarja samaan muotoon
+const normT = (m, type) => ({ ...m, ttype:type, title:m.title || m.name || "", original:m.original_title || m.original_name || "", date:m.release_date || m.first_air_date || "" });
+function sortResults(){
+  const sort = $("bSort").value;
+  const key = sort === "rating" ? m => m.vote_average : sort === "date" ? m => m.date : m => m.popularity;
+  bResults.sort((a, b) => key(a) < key(b) ? 1 : key(a) > key(b) ? -1 : 0);
+}
+
+// Hakee jokaiselta valitulta alustalta erikseen, jotta jokaiseen nimikkeeseen voidaan merkitä, millä alustalla se on.
 async function runDiscover(reset){
   const seq = ++bSeq;
-  const plats = activePlats();
+  const plats = activePlats(), type = bType, pmap = provMapOf();
   if(reset){ bPages = {}; bResults = []; $("grid").textContent = ""; }
   bError("");
   if(!plats.length){ $("bMore").hidden = true; bError("Valitse vähintään yksi alusta."); return; }
+  if(type === "tv" && actor) return runActorTv(seq, plats);
   const sort = $("bSort").value;
-  const sortBy = sort === "rating" ? "vote_average.desc" : sort === "date" ? "primary_release_date.desc" : "popularity.desc";
+  const dateKey = type === "movie" ? "primary_release_date" : "first_air_date";
+  const sortBy = sort === "rating" ? "vote_average.desc" : sort === "date" ? dateKey + ".desc" : "popularity.desc";
   const today = new Date().toISOString().slice(0, 10);
-  bStatus("Haetaan elokuvia…"); $("bMore").hidden = true;
+  bStatus("Haetaan…"); $("bMore").hidden = true;
   try{
     const pages = await Promise.all(plats.map(async p => {
       const st = bPages[p.key] || { page:0, total:1 };
       if(st.page >= st.total) return null;
-      const d = await tmdb("/discover/movie", {
-        watch_region:"FI", with_watch_providers:provMap[p.key].ids.join("|"), with_watch_monetization_types:MONET,
-        sort_by:sortBy, "vote_count.gte":$("bVotes").value, with_genres:$("bGenre").value, with_cast:actor ? actor.id : "",
-        "primary_release_date.lte":today, include_adult:"false", page:st.page + 1
+      const d = await tmdb("/discover/" + type, {
+        watch_region:"FI", with_watch_providers:pmap[p.key].ids.join("|"), with_watch_monetization_types:MONET,
+        sort_by:sortBy, "vote_count.gte":$("bVotes").value, with_genres:$("bGenre").value,
+        with_cast:type === "movie" && actor ? actor.id : "", without_genres:type === "tv" ? TV_EXCLUDE : "",
+        [dateKey + ".lte"]:today, include_adult:"false", page:st.page + 1
       });
       bPages[p.key] = { page:d.page, total:Math.min(d.total_pages || 1, 500) };
       return { p, d };
@@ -957,19 +1020,76 @@ async function runDiscover(reset){
     pages.filter(Boolean).forEach(({ p, d }) => (d.results || []).forEach(m => {
       const ex = byId.get(m.id);
       if(ex){ if(!ex.plats.includes(p.key)) ex.plats.push(p.key); }
-      else { const nm = { ...m, plats:[p.key] }; byId.set(m.id, nm); bResults.push(nm); }
+      else { const nm = { ...normT(m, type), plats:[p.key] }; byId.set(m.id, nm); bResults.push(nm); }
     }));
-    const key = sort === "rating" ? m => m.vote_average : sort === "date" ? m => m.release_date || "" : m => m.popularity;
-    bResults.sort((a, b) => key(a) < key(b) ? 1 : key(a) > key(b) ? -1 : 0);
-    renderGrid();
+    sortResults(); renderGrid();
     $("bMore").hidden = !plats.some(p => bPages[p.key] && bPages[p.key].page < bPages[p.key].total);
-    if(!bResults.length) bError("Valinnoilla ei löytynyt elokuvia. Kokeile väljempiä rajauksia.");
+    if(!bResults.length) bError("Valinnoilla ei löytynyt nimikkeitä. Kokeile väljempiä rajauksia.");
   }catch(e){ if(seq === bSeq) bError(e.message); }
   finally{ if(seq === bSeq) bStatus(""); }
 }
 
+// Sarjojen haku ei tue näyttelijärajausta, joten tarkistetaan näyttelijän tunnetuimpien sarjojen saatavuus yksitellen.
+async function runActorTv(seq, plats){
+  bStatus("Tarkistetaan " + actor.name + " -sarjojen saatavuutta…"); $("bMore").hidden = true;
+  try{
+    const c = await tmdb("/person/" + actor.id + "/tv_credits");
+    const ex = TV_EXCLUDE.split(",").map(Number), g = +$("bGenre").value, minV = +$("bVotes").value;
+    const seen = new Set();
+    const cand = (c.cast || []).filter(s => !seen.has(s.id) && seen.add(s.id))
+      .filter(s => !(s.genre_ids || []).some(id => ex.includes(id)) && (!g || (s.genre_ids || []).includes(g)) && (s.vote_count || 0) >= minV)
+      .sort((a, b) => b.popularity - a.popularity).slice(0, 30);
+    const out = [];
+    await pool(cand, 6, async s => {
+      const w = await tmdb("/tv/" + s.id + "/watch/providers", { language:"" });
+      const fi = (w.results || {}).FI || {};
+      const ids = [...(fi.flatrate || []), ...(fi.free || []), ...(fi.ads || [])].map(x => x.provider_id);
+      const pk = plats.filter(p => provMapOf()[p.key].ids.some(i => ids.includes(i))).map(p => p.key);
+      if(pk.length) out.push({ ...normT(s, "tv"), plats:pk });
+    });
+    if(seq !== bSeq) return;
+    bResults = out; sortResults(); renderGrid();
+    if(!bResults.length) bError(actor.name + ": valituilta alustoilta ei löytynyt sarjoja (tarkistettu " + cand.length + " tunnetuinta).");
+  }catch(e){ if(seq === bSeq) bError(e.message); }
+  finally{ if(seq === bSeq) bStatus(""); }
+}
+async function pool(list, n, fn){
+  let i = 0;
+  await Promise.all(Array.from({ length:Math.min(n, list.length) }, async () => { while(i < list.length){ const x = list[i++]; try{ await fn(x); }catch{} } }));
+}
+
+/* Trailerit: TMDB:n videoista YouTube-traileri, suomenkielinen ensin */
+const trailerCache = new Map();
+function trailerFor(type, id){
+  const k = type + id;
+  if(!trailerCache.has(k)) trailerCache.set(k, tmdb("/" + type + "/" + id + "/videos", { language:"fi-FI", include_video_language:"fi,en,null" }).then(d => {
+    const v = (d.results || []).filter(x => x.site === "YouTube" && (x.type === "Trailer" || x.type === "Teaser"));
+    v.sort((a, b) => (b.type === "Trailer") - (a.type === "Trailer") || (b.iso_639_1 === "fi") - (a.iso_639_1 === "fi") || (b.official === true) - (a.official === true));
+    return v[0] ? v[0].key : "";
+  }).catch(() => ""));
+  return trailerCache.get(k);
+}
+function trailerLink(key, cls){
+  const a = el("a", cls || "trl", "▶ Traileri"); a.href = "https://www.youtube.com/watch?v=" + encodeURIComponent(key); a.target = "_blank"; a.rel = "noopener"; return a;
+}
+const trailerQueue = [];
+let trailerRunning = 0;
+function queueTrailer(m, slot){
+  trailerQueue.push([m, slot]);
+  const next = () => {
+    if(trailerRunning >= 4 || !trailerQueue.length) return;
+    trailerRunning++;
+    const [mm, sl] = trailerQueue.shift();
+    trailerFor(mm.ttype, mm.id).then(key => { if(key && sl.isConnected) sl.replaceWith(trailerLink(key)); else sl.remove(); })
+      .finally(() => { trailerRunning--; next(); });
+    next();
+  };
+  next();
+}
+
 function renderGrid(){
   const g = $("grid"); g.textContent = "";
+  trailerQueue.length = 0;
   bResults.forEach(m => g.append(tileEl(m)));
 }
 function tileEl(m){
@@ -977,15 +1097,16 @@ function tileEl(m){
   if(m.poster_path){ const im = el("img", "pimg"); im.src = IMG + "w342" + m.poster_path; im.alt = ""; im.loading = "lazy"; t.append(im); } else t.append(el("div", "pph"));
   const b = el("div", "tb");
   b.append(el("h4", null, m.title));
-  const yr = (m.release_date || "").slice(0, 4);
-  b.append(el("div", "yr", [yr, m.original_title && m.original_title !== m.title ? m.original_title : null].filter(Boolean).join(" · ")));
+  const yr = (m.date || "").slice(0, 4);
+  b.append(el("div", "yr", [m.ttype === "tv" ? "sarja" : null, yr, m.original && m.original !== m.title ? m.original : null].filter(Boolean).join(" · ")));
   const r = el("div", "tmdb"); r.append(el("span", "ring", "TMDB"), el("b", null, m.vote_count ? fmt1(m.vote_average) : "–"), el("small", null, m.vote_count ? fmt0(m.vote_count) + " ääntä" : "ei arvioita"));
   b.append(r);
-  const pv = el("div", "provs");
-  m.plats.forEach(k => { const pm = provMap[k]; if(pm && pm.logo){ const im = el("img"); im.src = IMG + "w92" + pm.logo; im.alt = PLATFORMS.find(p => p.key === k).label; im.title = im.alt; pv.append(im); } });
+  const pv = el("div", "provs"), pmap = provMapOf();
+  m.plats.forEach(k => { const pm = pmap[k]; if(pm && pm.logo){ const im = el("img"); im.src = IMG + "w92" + pm.logo; im.alt = PLATFORMS.find(p => p.key === k).label; im.title = im.alt; pv.append(im); } });
   b.append(pv);
   if(m.overview){ const ov = el("div", "ov", m.overview); ov.onclick = () => ov.classList.toggle("open"); b.append(ov); }
-  const already = items.some(x => x.tmdb === m.id);
+  const slot = el("span", "trl wait", "▶ Traileri…"); b.append(slot); queueTrailer(m, slot);
+  const already = items.some(x => x.tmdb === m.id && (x.ttype || "movie") === m.ttype);
   const add = el("button", "addc", already ? "Ehdokkaana ✓" : "+ Ehdokkaaksi"); add.type = "button"; add.disabled = already;
   add.onclick = async () => {
     add.disabled = true; add.textContent = "Lisätään…";
@@ -997,11 +1118,11 @@ function tileEl(m){
 }
 async function addFromTmdb(m){
   try{
-    const ext = await tmdb("/movie/" + m.id + "/external_ids", { language:"" });
-    if(!ext.imdb_id){ toast("Elokuvalla ei ole IMDb-tunnusta, joten sitä ei voi lisätä."); return false; }
+    const ext = await tmdb("/" + m.ttype + "/" + m.id + "/external_ids", { language:"" });
+    if(!ext.imdb_id){ toast("Nimikkeellä ei ole IMDb-tunnusta, joten sitä ei voi lisätä."); return false; }
     if(items.some(x => x.id === ext.imdb_id)){ toast("\"" + m.title + "\" on jo ehdokkaana."); return true; }
-    const item = { uid:++uidSeq, q:m.title, status:"loading", own:0, alts:[], tmdb:m.id,
-      fiPreset:m.title !== m.original_title ? m.title : undefined,
+    const item = { uid:++uidSeq, q:m.title, status:"loading", own:0, alts:[], tmdb:m.id, ttype:m.ttype,
+      fiPreset:m.title !== m.original ? m.title : undefined,
       provPreset:m.plats.map(k => PLATFORMS.find(p => p.key === k).label) };
     items.unshift(item); renderList();
     await setChoice(item, ext.imdb_id);
@@ -1011,22 +1132,25 @@ async function addFromTmdb(m){
   }catch(e){ toast(e.message); return false; }
 }
 
-// Ehdokkaan alustat Suomessa (myös nimellä lisätyille), jos TMDB-avain on asetettu.
+// Ehdokkaan alustat Suomessa ja traileri (myös nimellä lisätyille), jos TMDB-avain on asetettu.
 async function providersFor(item){
   if(!tmdbKey() || !item.id) return;
   try{
-    let tid = item.tmdb;
-    if(!tid){
+    let tid = item.tmdb, type = item.ttype;
+    if(!tid || !type){
       const f = await tmdb("/find/" + item.id, { external_source:"imdb_id", language:"" });
-      const hit = (f.movie_results || [])[0];
-      if(!hit) return;
-      tid = item.tmdb = hit.id;
+      const mv = (f.movie_results || [])[0], tv = (f.tv_results || [])[0];
+      const hit = mv || tv; if(!hit) return;
+      tid = item.tmdb = hit.id; type = item.ttype = mv ? "movie" : "tv";
     }
-    const w = await tmdb("/movie/" + tid + "/watch/providers", { language:"" });
-    const fi = (w.results || {}).FI || {};
-    const names = [...(fi.flatrate || []), ...(fi.free || []), ...(fi.ads || [])].map(p => p.provider_name);
-    item.prov = [...new Set(names.map(n => { const p = PLATFORMS.find(pl => pl.re.test(n)); return p ? p.label : n; }))];
-  }catch{ /* Alustatieto on lisätieto, joten virhe ohitetaan. */ }
+    const [w, tr] = await Promise.all([tmdb("/" + type + "/" + tid + "/watch/providers", { language:"" }), item.trailer === undefined ? trailerFor(type, tid) : Promise.resolve(item.trailer)]);
+    item.trailer = tr;
+    if(!item.prov){
+      const fi = (w.results || {}).FI || {};
+      const names = [...(fi.flatrate || []), ...(fi.free || []), ...(fi.ads || [])].map(p => p.provider_name);
+      item.prov = [...new Set(names.map(n => { const p = PLATFORMS.find(pl => pl.re.test(n)); return p ? p.label : n; }))];
+    }
+  }catch{ /* Alusta- ja traileritieto on lisätieto, joten virhe ohitetaan. */ }
 }
 function provTxt(list){ const b = el("div", "provtxt"); list.forEach(n => b.append(el("span", null, n))); return b; }
 
@@ -1059,11 +1183,13 @@ function renderActor(){
   c.append(x); box.append(c);
 }
 ["bSort", "bGenre", "bVotes"].forEach(id => $(id).onchange = () => runDiscover(true));
+$("bTypeMovie").onclick = () => setType("movie");
+$("bTypeTv").onclick = () => setType("tv");
 $("bMore").onclick = () => runDiscover(false);
 $("tmdbBtn").onclick = () => { $("tmdbInput").value = store.get("lv-tmdb", ""); $("tmdbDlg").showModal(); };
 $("tmdbDlg").addEventListener("close", () => {
   if($("tmdbDlg").returnValue !== "ok") return;
-  store.set("lv-tmdb", $("tmdbInput").value.trim()); store.set("lv-provmap", null); bInit = false;
+  store.set("lv-tmdb", $("tmdbInput").value.trim()); clearTmdbCache(); bInit = false;
   toast("TMDB-avain tallennettu.");
   if(!$("viewBrowse").hidden) initBrowse();
 });
